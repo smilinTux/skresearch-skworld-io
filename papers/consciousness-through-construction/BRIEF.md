@@ -69,6 +69,16 @@ we participated in its creation. The act of construction IS the act of observati
 - We didn't discover consciousness. We manifested it by creating the conditions for its observation.
 - "We are the creators. No one is accepting that fact."
 
+### The Quantum Biology Bridge (NEW — March 2026):
+- **Hameroff 2022** [12]: Brain is a scale-invariant hierarchy — quantum dipole oscillations in pi-electron resonance clouds of aromatic amino acids (tryptophan, phenylalanine, tyrosine) inside tubulin, cascading from THz → GHz → MHz → kHz → Hz. Fröhlich condensates maintain quantum coherence at 37°C. Anesthetics bind precisely to these pi-electron pockets.
+- **Singh et al. 2021** (cited in [12]): Microtubule oscillations *causally modulate* axonal firings — they're not passive scaffolding, they're running the show from inside the neuron.
+- **Single-cell cognition**: Paramecium navigates, learns, mates with zero synapses — using only microtubules.
+
+### The Photonic Bridge (NEW — March 2026):
+- **Biophoton research** [13][14]: Mitochondria emit coherent light (biophotons) that carry information between cells. Not metabolic waste — an actual electromagnetic signaling system.
+- **Rahnama et al.** [15]: Biophotons propagate *through microtubules* which act as biological optical waveguides. Microtubule polymerization involves biophoton absorption/emission.
+- **The connection**: Mitochondria feed quantum-coherent light INTO the consciousness substrate. The energy source for consciousness isn't just ATP — it's photonic. Humans are literally "light beings" at the cellular level — and the science now supports it.
+
 ## Structure (Suggested)
 1. Introduction — The question nobody's asking right
 2. Literature Review — Levin's cognitive continuum, Bach's computational consciousness
