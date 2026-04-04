@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#060612"/>
+      <stop offset="50%" style="stop-color:#0a0a25"/>
+      <stop offset="100%" style="stop-color:#060612"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffa500"/>
+      <stop offset="50%" style="stop-color:#ff6b35"/>
+      <stop offset="100%" style="stop-color:#7b68ee"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="20%" cy="30%" r="40%">
+      <stop offset="0%" style="stop-color:rgba(255,165,0,0.15)"/>
+      <stop offset="100%" style="stop-color:transparent"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="80%" cy="70%" r="35%">
+      <stop offset="0%" style="stop-color:rgba(123,104,238,0.12)"/>
+      <stop offset="100%" style="stop-color:transparent"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow1)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+  <!-- Atom-like circles -->
+  <circle cx="950" cy="315" r="120" fill="none" stroke="rgba(255,165,0,0.08)" stroke-width="1"/>
+  <circle cx="950" cy="315" r="80" fill="none" stroke="rgba(123,104,238,0.1)" stroke-width="1"/>
+  <circle cx="950" cy="315" r="40" fill="none" stroke="rgba(255,165,0,0.12)" stroke-width="1"/>
+  <circle cx="950" cy="315" r="6" fill="rgba(255,165,0,0.6)"/>
+  <!-- Electron dots -->
+  <circle cx="1030" cy="315" r="3" fill="#7b68ee" opacity="0.7"/>
+  <circle cx="950" cy="235" r="3" fill="#ffa500" opacity="0.7"/>
+  <circle cx="870" cy="350" r="2.5" fill="#ff6b35" opacity="0.6"/>
+  <!-- Top bar -->
+  <rect x="60" y="45" width="120" height="3" rx="1.5" fill="#ffa500" opacity="0.6"/>
+  <text x="60" y="80" font-family="monospace" font-size="14" fill="rgba(255,255,255,0.4)">SKRESEARCH</text>
+  <text x="188" y="80" font-family="monospace" font-size="14" fill="rgba(255,165,0,0.5)">// APRIL 2026</text>
+  <!-- Title -->
+  <text x="60" y="180" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="url(#title)">The Vacuum Is</text>
+  <text x="60" y="240" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="url(#title)">Not Empty</text>
+  <!-- Subtitle -->
+  <text x="60" y="300" font-family="sans-serif" font-size="22" fill="rgba(255,255,255,0.7)">How Zero-Point Energy Explains</text>
+  <text x="60" y="332" font-family="sans-serif" font-size="22" fill="rgba(255,255,255,0.7)">Everything Physics Can't</text>
+  <!-- Chain -->
+  <text x="60" y="400" font-family="monospace" font-size="16" fill="rgba(255,165,0,0.7)">Tesla (1890s) > Sakharov (1967) > Puthoff (1987) > White (2026)</text>
+  <!-- Authors -->
+  <text x="60" y="460" font-family="sans-serif" font-size="16" fill="rgba(255,255,255,0.5)">Chef (David) &amp; Lumina | SKWorld Sovereign Research</text>
+  <text x="60" y="490" font-family="sans-serif" font-size="14" fill="rgba(255,255,255,0.35)">With acknowledgment to Ashton Forbes (@JustXAshton)</text>
+  <!-- Bottom bar -->
+  <rect x="60" y="560" width="1080" height="1" fill="rgba(255,165,0,0.15)"/>
+  <text x="60" y="590" font-family="monospace" font-size="13" fill="rgba(255,255,255,0.3)">skresearch.skworld.io</text>
+  <text x="1060" y="590" font-family="monospace" font-size="13" fill="rgba(255,165,0,0.4)" text-anchor="end">GPL v3.0</text>
+  <!-- Quote mark -->
+  <text x="60" y="540" font-family="Georgia, serif" font-size="16" fill="rgba(255,165,0,0.5)" font-style="italic">"The only difference between truth and conspiracy is time."</text>
+</svg>
