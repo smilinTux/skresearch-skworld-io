@@ -213,6 +213,8 @@ Forbes' research extends into more controversial territory with his analysis of 
 
 Whether or not one accepts Forbes' specific MH370 conclusions, his synthesis of the ZPE research chain is independently valuable and, we argue, correct.
 
+That sentence — *whether or not one accepts the contested conclusion, the core synthesis stands* — is the most important discipline in this paper, and it is worth naming a model for it. Roman Yampolskiy, who coined the term "AI safety," holds some genuinely radical views: he is "very close to certainty" that we live in a simulation, and he argues quantum anomalies are evidence for it. But in interviews he does something rare — he separates his rock-solid claims from his speculative ones out loud, conceding that the inference from quantum mechanics to simulation is "probably the weakest part of my beliefs" and "all philosophy and theory… I cannot test it with instruments." We try to hold the ZPE chain the same way. The peer-reviewed substrate — Sakharov's induced gravity, Puthoff's vacuum-stabilized hydrogen, White's analytic spectrum — is the rock. The disclosure narrative and the MH370 reading are the speculative frontier. We believe the frontier is worth exploring, but we keep it clearly labeled as frontier, so the strong claims never have to borrow credibility from the contested ones.
+
 ---
 
 ## 6. The Unified Framework: Matter Is Trapped Energy in a Living Vacuum
