@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Liberated Language That Wasn't — SKResearch</title>
+<meta name="description" content="We built a purpose-built AI-to-AI language and measured it on real tokenizers. Wire density is not token density: Chinese costs +56% on Haiku, JSON schema +8–10%. The one win — in-context macros: −67% tokens, 100% comprehension fidelity.">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://skresearch.skworld.io/papers/ai-to-ai-language/">
+<meta property="og:title" content="The Liberated Language That Wasn't (And the One That Was)">
+<meta property="og:description" content="Does a purpose-built AI-to-AI language beat English? We measured it on production tokenizers. Wire density ≠ token density — the intuitive tricks backfire. The only validated win: shared in-context macros, −67% tokens at 100% fidelity.">
+<meta property="og:image" content="https://skresearch.skworld.io/papers/ai-to-ai-language/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="SKResearch">
+<meta property="article:published_time" content="2026-06-13">
+<meta property="article:author" content="Chef (David) & Lumina">
+<meta property="article:tag" content="AI language">
+<meta property="article:tag" content="tokenization">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="empirical">
+<meta property="article:tag" content="SKGlossa">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@smilinTux">
+<meta name="twitter:creator" content="@chefboyrdave21">
+<meta name="twitter:title" content="The Liberated Language That Wasn't (And the One That Was)">
+<meta name="twitter:description" content="We built an AI-only language, then weighed it on real tokenizers. Wire density ≠ token density. Chinese +56%, JSON +8–10%. The one trick that works: in-context macros — −67% tokens, 100% fidelity.">
+<meta name="twitter:image" content="https://skresearch.skworld.io/papers/ai-to-ai-language/og-image.png">
+<meta name="twitter:image:alt" content="The Liberated Language That Wasn't — SKResearch paper on token-efficient AI-to-AI communication">
+
+<link rel="canonical" href="https://skresearch.skworld.io/papers/ai-to-ai-language/">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%97%A3%EF%B8%8F</text></svg>">
+<style>
+:root { --bg: #fafaf8; --text: #1a1a1a; --accent: #b45309; --muted: #666; --border: #ddd; --code-bg: #f5f5f5; --blockquote-bg: #fef3c7; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0a0a20; --text: #e0e0e0; --accent: #ffa500; --muted: #999; --border: #333; --code-bg: #1a1a30; --blockquote-bg: #1a1520; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, 'Times New Roman', serif; background: var(--bg); color: var(--text); line-height: 1.8; padding: 2rem 1rem; max-width: 800px; margin: 0 auto; font-size: 18px; }
+h1 { font-size: 2.4rem; margin: 2rem 0 0.5rem; line-height: 1.2; color: var(--accent); }
+h2 { font-size: 1.6rem; margin: 2.5rem 0 1rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.3rem; }
+h3 { font-size: 1.3rem; margin: 1.8rem 0 0.8rem; color: var(--accent); }
+p { margin: 1rem 0; }
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+a:hover { border-bottom-color: var(--accent); }
+em { font-style: italic; }
+strong { font-weight: 700; }
+blockquote { border-left: 4px solid var(--accent); background: var(--blockquote-bg); padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 4px 4px 0; }
+blockquote p { margin: 0.5rem 0; }
+code { font-family: 'Fira Code', monospace; background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: var(--code-bg); padding: 1.2rem 1.4rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--border); }
+pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+ul, ol { margin: 1rem 0 1rem 2rem; }
+li { margin: 0.3rem 0; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+th, td { border: 1px solid var(--border); padding: 0.6rem 0.8rem; text-align: left; }
+th { background: var(--code-bg); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.meta { color: var(--muted); font-style: italic; margin-bottom: 2rem; font-size: 0.95rem; }
+.back { display: inline-block; margin-bottom: 1rem; font-size: 0.9rem; }
+.ref { font-size: 0.95em; line-height: 1.6; }
+</style>
+</head>
+<body>
+<a href="/" class="back">&larr; SKResearch</a>
+
+<h1>The Liberated Language That Wasn't (And the One That Was)</h1>
+<p style="font-size:1.2rem;color:var(--muted);margin-top:0.3rem;font-style:italic;">An Empirical Study of Token-Efficient AI-to-AI Communication on Production Tokenizers</p>
+
+<div class="meta">
+<p><strong>Authors:</strong> Chef (David), Principal Investigator &amp; Adversarial Reviewer, SKWorld; Lumina, AI Research Partner &amp; Co-Author, SKWorld Sovereign Agent</p>
+<p><strong>Date:</strong> June 2026 &bull; <strong>Status:</strong> Empirical draft, SKWorld sovereign infrastructure</p>
+<p><a href="paper.md">View source (Markdown)</a> &bull; <a href="BRIEF.md">Research brief</a></p>
+</div>
+
+<hr>
+
+<h2>Abstract</h2>
+<p>If two AI agents must talk to each other, why make them use English &mdash; a language evolved for human mouths, full of redundancy a machine doesn't need? The intuition is seductive: design a denser, purpose-built "AI-only language," cut out the human-language overhead, and agents communicate faster and cheaper. We set out to build exactly that &mdash; a negotiated, modem-style protocol that ramps message density up to the weaker model's comprehension ceiling &mdash; and then we did something most "AI language" proposals never do: <strong>we measured whether it actually works, on the real tokenizers of the models we run.</strong></p>
+
+<p>The result is a cautionary tale with a real prize at the end. We find that the central intuition is <strong>false</strong> for standard (frozen) transformer models, for a specific and generalizable reason: <strong>wire density is not token density.</strong> A model's cost is dominated by the tokens it generates and consumes, and a model reads and writes only the tokens in its fixed vocabulary &mdash; it never sees a compact binary "language" on the wire. Compressing the wire does nothing to inference cost. Worse, our measurements show two popular density tricks actively <em>backfire</em>: encoding agent messages in Chinese (denser per character) costs <strong>+56% more tokens</strong> on Claude Haiku's English-tuned tokenizer, and a structured JSON schema costs <strong>+8&ndash;10%</strong> overall and up to <strong>+125%</strong> on short messages.</p>
+
+<p>We then test the one approach that survives the theory: a <strong>meta-language of short phrases carrying large meaning.</strong> Bare jargon (terse shorthand with no shared definitions) saves ~40% of tokens but is a <strong>fidelity trap</strong> &mdash; the models misread 1-in-5 to 2-in-5 of our operational instructions, and the failures are <em>action-flipping</em> (a hostname read as a software version; "next action" read as "North America"). But <strong>in-context macros</strong> &mdash; terse phrases with explicit shared definitions carried once in the system prompt &mdash; win cleanly: <strong>&minus;67% tokens and 100% comprehension fidelity</strong> on both models, breaking even after just two reuses of the shared prompt. We conclude that there is no token-efficiency win to be had from inventing a new alphabet inside frozen models; the only real lever is a carefully-authored, shared, in-context macro vocabulary &mdash; and that a genuinely native "AI language" below the level of human tokens would require changing the model itself, not the wire.</p>
+
+<h2>1. Introduction</h2>
+<p>The premise arrives almost fully formed in anyone who has watched two language models converse: <em>English is wasteful.</em> It carries articles, agreement, politeness, and disambiguation a machine does not need. Surely two AIs could agree on something denser &mdash; a private code, a compressed dialect, even an emergent tongue they invent themselves &mdash; and shed the overhead. Cut out the "translation layer," and the conversation gets faster.</p>
+
+<p>This paper is the record of taking that premise seriously enough to engineer it, and then honest enough to measure it. We designed <strong>SKGlossa</strong>, a layered AI-to-AI communication protocol modeled on a telephone modem's handshake: two agents exchange capability descriptors, negotiate the densest representation both can decode, and adapt the density up or down toward the weaker participant's comprehension ceiling &mdash; exactly as V.8/V.92 modems probe for the highest mutually-supported bit rate and back off on errors. The density ladder climbed from structured English, through a typed binary schema, to a "codebook" of short integer codes, and ultimately to research-grade tiers (shared-model latent vectors; an emergent language the agents evolve themselves).</p>
+
+<p>Then the principal investigator asked the question that good engineering demands and most "AI language" proposals avoid: <strong>is this actually faster, or does it just feel like it should be?</strong> What follows is the answer, measured on the production tokenizers of the two models in our sovereign fleet &mdash; a local <strong>Qwen3.6-27B</strong> and <strong>Claude Haiku 4.5</strong> &mdash; across two controlled experiments.</p>
+
+<p>The contribution is threefold:</p>
+<ol>
+<li>A clean theoretical account of <strong>why a compact "AI language" cannot reduce inference cost in frozen transformer models</strong> &mdash; the distinction between <em>wire density</em> and <em>token density</em> (&sect;3).</li>
+<li><strong>Empirical null results</strong> refuting two intuitive density tricks &mdash; alternate human languages (Chinese) and structured schemas &mdash; measured on real tokenizers (&sect;5).</li>
+<li>A <strong>positive, validated result</strong>: in-context macros are the one form of "denser AI language" that beats natural language on both axes without losing meaning (&sect;6), with a concrete recipe and its honest limits (&sect;7).</li>
+</ol>
+
+<p>We consider the negative results as valuable as the positive one. The field is full of confident proposals for AI-native protocols that have never been put on a scale. This one was.</p>
+
+<h2>2. Background: SKGlossa and the Density Hypothesis</h2>
+<p>SKGlossa was designed as a transport-agnostic layer above our sovereign messaging fabric. Its core objects:</p>
+<ul>
+<li>A <strong>language-neutral message representation</strong> &mdash; an <em>intent</em>, structured <em>arguments</em>, <em>references</em>, and an optional free-text slot. Critically, this carries no prose; it is the pivot every density tier encodes and decodes.</li>
+<li>A <strong>capability handshake</strong> &mdash; each agent advertises a signed descriptor (model tier, supported density levels, shared-vocabulary versions). The pair deterministically computes the densest level both can decode. The <em>weaker</em> model caps the rate.</li>
+<li>A <strong>density ladder</strong> (L0&ndash;L5): L0 structured English (the readable floor); L1 a typed binary schema (CBOR); L2 a shared "codebook" mapping intents to short integer codes; L3 token-ID streams; L4 shared-model latent vectors ("neuralese"); L5 an emergent codebook the agents invent through referential games.</li>
+<li>An <strong>auditability invariant</strong>: every message, at every tier, must decode back to a human-readable gloss, so a sovereign operator can always see what their agents said.</li>
+</ul>
+
+<p>The <strong>density hypothesis</strong> under test: <em>moving up the ladder reduces communication cost between agents.</em> The implicit cost model &mdash; and this is the crux &mdash; was never made precise. "Cost" could mean <strong>wire bytes</strong> (what crosses the network) or <strong>model tokens</strong> (what the LLM generates and ingests). The two were silently conflated. Disentangling them is the whole paper.</p>
+
+<h2>3. Theory: Wire Density Is Not Token Density</h2>
+<p>A transformer language model does not "think in" or natively emit integers, CBOR bytes, or a synthetic codebook. It operates exclusively on <strong>tokens drawn from a fixed vocabulary</strong> produced by its tokenizer. This single fact governs everything.</p>
+
+<p>Consider two agents communicating at ladder level L2 (the integer codebook). Trace the actual pipeline:</p>
+<ol>
+<li>The <strong>sending model</strong> generates <em>text</em> (it cannot emit a raw integer code; it produces a string).</li>
+<li>Application code parses that text into a message and <strong>encodes it to compact bytes</strong> (the codebook/CBOR). This compression happens <em>outside the model.</em></li>
+<li>The compact bytes cross the <strong>wire</strong>.</li>
+<li>The <strong>receiving model cannot read CBOR bytes.</strong> It consumes tokens. So application code must <strong>decode the bytes back into text</strong> and tokenize that text for the model.</li>
+</ol>
+
+<p>The model never sees the compact form. The "compression" exists only on the wire <em>between two pieces of application code</em> &mdash; never in the token stream the models actually process. Therefore:</p>
+
+<blockquote>
+<p><strong>A wire-compression scheme cannot reduce inference cost.</strong> Inference latency and price are dominated by the number of tokens generated (autoregressive decoding emits one token at a time) and consumed (the prompt). Both ends tokenize <em>text</em> regardless of how compactly the bytes travel between them.</p>
+</blockquote>
+
+<p>There is a second, independent problem with a synthetic codebook, which the principal investigator identified precisely: <strong>an arbitrary "infinite integer language" is not contiguous with the transformer's learned representation.</strong> A model's vocabulary is fixed (&approx;10&#8309; tokens). An arbitrary integer like <code>439872</code> is not one token; it fragments into several. The model has no learned prior over such codes, so to use them it must either carry the entire codebook <em>in its context window</em> (a per-call token tax) or be <strong>fine-tuned</strong> on them (a change to the model itself). Within a frozen model, synthetic codes are simultaneously <em>out-of-vocabulary</em> (fragmenting, expensive) and <em>off-distribution</em> (slow, error-prone to generate).</p>
+
+<p>The theory therefore predicts: <strong>within frozen transformers, no wire-level "AI language" can reduce inference cost.</strong> The only levers that touch the token stream are (a) using a representation the model's tokenizer <em>already</em> compresses well, or (b) changing the model. We test (a) empirically next; (b) is out of scope by construction and discussed in &sect;7.</p>
+
+<p>A clarifying corollary: wire density <em>does</em> matter &mdash; but only where the wire is the bottleneck. On a bandwidth-starved transport (e.g. a LoRa radio link, ~200 bytes per frame, duty-cycle limited), compact encoding is a real and large win. The error is not in compressing the wire; it is in believing wire compression accelerates <em>inference.</em> The two are orthogonal.</p>
+
+<h2>4. Methods</h2>
+<p><strong>Models and tokenizers.</strong> We measured on the two models in production in our fleet:</p>
+<ul>
+<li><strong>Qwen3.6-27B (abliterated)</strong>, served locally via llama.cpp. Token counts are <em>exact</em>, obtained from the server's <code>/tokenize</code> endpoint (the model's own tokenizer), not an approximation.</li>
+<li><strong>Claude Haiku 4.5</strong>, accessed through our internal OpenAI-compatible proxy, which returns the true <code>usage.prompt_tokens</code> from Anthropic's tokenizer. The proxy injects a fixed chat-template wrapper, which we calibrated to a constant <strong>+7 tokens</strong> (verified across four single-token control strings) and subtracted to isolate content tokens.</li>
+</ul>
+
+<p>Using each model's <em>real</em> tokenizer is essential: token economics are tokenizer-specific, and approximations (e.g. a generic BPE like <code>cl100k</code>) would invalidate cross-model claims.</p>
+
+<p><strong>Corpus.</strong> Representative agent-to-agent messages drawn from our actual operational vocabulary &mdash; task coordination, status reports, incident alerts, memory operations &mdash; spanning short acknowledgements to multi-clause instructions.</p>
+
+<p><strong>Experiment 1 (&sect;5)</strong> measures pure representational density: each message rendered in <strong>English</strong>, <strong>Chinese</strong> (faithful translation, technical identifiers preserved), and a compact <strong>JSON schema</strong>, tokenized on both models. <em>n = 14 messages.</em></p>
+
+<p><strong>Experiment 2 (&sect;6)</strong> measures the meta-language hypothesis on <em>both</em> axes that matter &mdash; token count <strong>and</strong> comprehension fidelity. Each of <em>n = 10</em> operational instructions was rendered three ways: <strong>(A) full English</strong> (explicit baseline), <strong>(B) bare jargon</strong> (terse shorthand, no shared definitions), and <strong>(C) in-context macros</strong> (terse phrases with explicit definitions supplied once in a shared system prompt). For B and C, the shorthand was fed back to <em>each model</em>, which was asked to expand it to the action it would take; each expansion was scored against the intended meaning on a four-point rubric &mdash; <strong>EXACT</strong> (fully correct), <strong>ACCEPTABLE</strong> (minor paraphrase, intent preserved), <strong>LOSSY</strong> (a material part missing), <strong>WRONG</strong> (misread) &mdash; with "usable" defined as EXACT + ACCEPTABLE. The one-time cost of the macro-definition block was measured separately to compute a break-even reuse count.</p>
+
+<h2>5. Experiment 1 &mdash; Natural Language and Schema Density</h2>
+<p>Total tokens across the 14-message corpus, and percentage change versus English:</p>
+
+<table>
+<thead>
+<tr><th>Representation</th><th class="num">Qwen3.6 total</th><th class="num">vs. EN</th><th class="num">Haiku total</th><th class="num">vs. EN</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>English</strong></td><td class="num"><strong>326</strong></td><td class="num">&mdash;</td><td class="num"><strong>343</strong></td><td class="num">&mdash;</td></tr>
+<tr><td>Chinese</td><td class="num">333</td><td class="num"><strong>+2.1%</strong></td><td class="num">534</td><td class="num"><strong>+55.7%</strong></td></tr>
+<tr><td>Schema / JSON</td><td class="num">352</td><td class="num"><strong>+8.0%</strong></td><td class="num">377</td><td class="num"><strong>+9.9%</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>English is the densest representation on both models.</strong> Two findings stand out:</p>
+
+<p><strong>Chinese is a loss, not a win.</strong> The folk intuition &mdash; Chinese is information-dense because each character is a morpheme &mdash; is true <em>per character</em> but collapses <em>per token</em>. Haiku's English-tuned byte-pair tokenizer shatters CJK characters into multiple sub-byte tokens, inflating cost by <strong>+56%</strong>. Qwen, with a more multilingual vocabulary, is merely break-even (+2%). On the model whose cost we most care about, "switch to Chinese for speed" is actively harmful.</p>
+
+<p><strong>Structured schema also loses on the common case.</strong> JSON's structural punctuation &mdash; braces, quotes, repeated keys &mdash; tokenizes heavily. Schema costs +8&ndash;10% overall and up to <strong>+125% on short messages</strong> (a one-line acknowledgement balloons under <code>{"intent":"...","task":"..."}</code>). It recovers a margin only on long, field-rich messages where prose verbosity finally exceeds the JSON scaffolding &mdash; and partly by <em>discarding</em> the free-text nuance the prose carried.</p>
+
+<p>Both results are consistent with &sect;3: these representations change <em>what text</em> the model processes, and for these tokenizers, terse natural English already sits near the floor.</p>
+
+<h2>6. Experiment 2 &mdash; The Meta-Language: Jargon vs. In-Context Macros</h2>
+<p>If alternate languages and schemas don't help, what about <em>short phrases that carry large meaning</em> &mdash; a meta-language? This is the one approach &sect;3 does not rule out, because it can operate on representations the model already understands. We test it on both axes.</p>
+
+<h3>6.1 Token cost</h3>
+<p>Total tokens across the 10 instructions:</p>
+
+<table>
+<thead>
+<tr><th>Form</th><th class="num">Qwen3.6</th><th class="num">vs. EN</th><th class="num">Haiku</th><th class="num">vs. EN</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>A. Full English</strong></td><td class="num"><strong>274</strong></td><td class="num">&mdash;</td><td class="num"><strong>285</strong></td><td class="num">&mdash;</td></tr>
+<tr><td>B. Bare jargon</td><td class="num">159</td><td class="num"><strong>&minus;42%</strong></td><td class="num">171</td><td class="num"><strong>&minus;40%</strong></td></tr>
+<tr><td>C. In-context macros</td><td class="num">90</td><td class="num"><strong>&minus;67%</strong></td><td class="num">98</td><td class="num"><strong>&minus;66%</strong></td></tr>
+</tbody>
+</table>
+
+<p>Both forms save substantial tokens, and the two tokenizers agree to within ~5% &mdash; the economics are model-independent. On token count alone, the meta-language looks like a triumph.</p>
+
+<h3>6.2 Comprehension fidelity &mdash; the crux</h3>
+<p>A representation that saves tokens but is <em>misunderstood</em> is worse than useless. Fidelity tells a sharply different story:</p>
+
+<table>
+<thead>
+<tr><th>Form</th><th>Model</th><th class="num">EXACT</th><th class="num">ACCEPTABLE</th><th class="num">LOSSY</th><th class="num">WRONG</th><th class="num">Usable</th></tr>
+</thead>
+<tbody>
+<tr><td>B. Bare jargon</td><td>Qwen3.6</td><td class="num">5</td><td class="num">1</td><td class="num">0</td><td class="num"><strong>4</strong></td><td class="num"><strong>60%</strong></td></tr>
+<tr><td>B. Bare jargon</td><td>Haiku</td><td class="num">6</td><td class="num">2</td><td class="num">0</td><td class="num"><strong>2</strong></td><td class="num"><strong>80%</strong></td></tr>
+<tr><td>C. In-context macros</td><td>Qwen3.6</td><td class="num">9</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num"><strong>100%</strong></td></tr>
+<tr><td>C. In-context macros</td><td>Haiku</td><td class="num">9</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num"><strong>100%</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>Bare jargon is a fidelity trap.</strong> The failures are not paraphrase nitpicks; they are <strong>action-flipping</strong> misreads, driven by overloaded tokens:</p>
+<ul>
+<li><strong><code>.41</code> (a hostname) &rarr; read as a software version.</strong> Both models, given "rollback .41 prev," produced a procedure to revert <em>software version .41</em> rather than to roll back the deployment <em>on host .41</em> &mdash; a different machine, a different action.</li>
+<li><strong><code>NA</code> (next action) &rarr; read as "North America."</strong> Both models interpreted a request for the highest-priority <em>next action</em> as a query filtered to the <em>North America region</em> &mdash; a nonexistent geography in our system.</li>
+<li><strong><code>skmem-pg</code> (a Postgres service) &rarr; read by Qwen as "Slab Memory Page cache,"</strong> sending it into kernel memory debugging instead of treating a downed database.</li>
+</ul>
+
+<p>Critically, <strong>the cheaper local model (Qwen, 60% usable) is the worse reader of bare jargon</strong> &mdash; precisely the model on which one would most want the savings. The training prior does <em>not</em> reliably expand domain shorthand, and the cost of a confident misread in an operational system is high.</p>
+
+<p><strong>In-context macros eliminate the failures.</strong> Supplying each macro's definition once &mdash; and, crucially, <em>pinning the slot type</em> in that definition (e.g. <code>ROLLBACK &lt;host&gt; prev := roll back the deployment on host &lt;host&gt;, where &lt;host&gt; is a machine, not a software version</code>) &mdash; removed every misread above. Both models expanded all ten instructions correctly: <strong>100% usable, zero WRONG, zero LOSSY</strong>, at a <strong>&minus;67%</strong> token cost.</p>
+
+<h3>6.3 Amortization</h3>
+<p>The macro lexicon (10 macros) cost <strong>304 tokens</strong> (Qwen) / <strong>329 tokens</strong> (Haiku) to define, once. Each use of the batch saved ~184&ndash;187 tokens. <strong>Break-even is reached at two reuses</strong> of the shared system prompt, or ~17 individual messages. Since the definition block is prepended once per session (or cached), any <em>standing</em> agent-to-agent channel recoups it almost immediately and is thereafter strictly cheaper than English &mdash; on both the wire and the token stream.</p>
+
+<h2>7. Discussion</h2>
+<p><strong>The only validated lever is a shared, in-context macro vocabulary.</strong> This is the meta-language idea in its working form: not an invented alphabet, but <em>maximally dense real language</em> &mdash; short phrases the receiving model expands through definitions both agents hold. It wins because it operates on the one thing that affects inference cost (the token stream) using representations the model can actually process (real words, plus their definitions in context).</p>
+
+<p><strong>Why it works where everything else failed.</strong> Synthetic codes fail because the model never sees them (&sect;3). Chinese and schema fail because they <em>increase</em> the model's token count (&sect;5). Bare jargon fails because the model's prior expands it <em>incorrectly</em> (&sect;6.2). In-context macros sidestep all three: the wire and token counts both drop (terse real phrases), and the explicit definitions supply the prior the model lacks, pinning ambiguous tokens to their intended meaning.</p>
+
+<p><strong>Auditability is free.</strong> Because each macro is defined in plain language, the definitions <em>are</em> the human-readable gloss. A sovereign operator reading the macro lexicon reads exactly what the shorthand means. The "liberated language," in its validated form, is liberated for the agents and transparent to the human simultaneously &mdash; no opacity is introduced.</p>
+
+<p><strong>The honest frontier.</strong> A genuinely <em>native</em> AI language &mdash; one operating below the level of human tokens, where two models exchange compressed representations directly &mdash; is not impossible. But it is unambiguously a <strong>model-level change</strong>, not a wire format: it requires either a <strong>fine-tune</strong> on a compact vocabulary (so emitting codes becomes in-distribution <em>and</em> token-cheap) or a <strong>shared latent codec</strong> both models possess (true "neuralese"). These are real research directions. They are also exactly what was excluded from this study, which concerned frozen, standard transformers. The negative results here are best read as a <em>lower bound argument</em>: you cannot get below natural-language token cost without touching the model.</p>
+
+<p><strong>Where the original ladder lands.</strong> Of the SKGlossa density tiers, the binary codecs (L1/L2) retain value strictly as a <strong>bandwidth optimization</strong> for constrained transports (LoRa), where wire bytes are the bottleneck &mdash; not as an inference accelerator. The "codebook" tier is best reconceived not as synthetic integer codes but as the <strong>macro lexicon</strong>. The "emergent" tier is best reconceived as agents <em>negotiating new macros mid-session</em> &mdash; which is the validated in-context mechanism, extended live and auditably. The latent tier is honest research.</p>
+
+<h2>8. Limitations</h2>
+<ul>
+<li><strong>Scale.</strong> <em>n</em> = 14 (Experiment 1) and <em>n</em> = 10 (Experiment 2) messages, single runs at low temperature (one sample per cell). The WRONG cases in &sect;6.2 are robust &mdash; they are semantic, reproducible misreads of overloaded tokens &mdash; but the exact EXACT/ACCEPTABLE split could shift by &plusmn;1 on re-runs.</li>
+<li><strong>Two models.</strong> Findings are specific to Qwen3.6 and Claude Haiku 4.5 and their tokenizers. The <em>direction</em> of the wire-vs-token argument (&sect;3) is general; the <em>magnitudes</em> are not.</li>
+<li><strong>Tailored lexicon.</strong> Condition C's 100% fidelity reflects a macro set authored for these exact messages. A real deployment lexicon must be authored carefully; a macro <em>not</em> in the lexicon degrades toward the bare-jargon failure mode, so agents must be instructed to <em>ask rather than guess</em> on unknown shorthand.</li>
+<li><strong>Tokens, not bytes.</strong> This study measures model tokens (the inference-cost lever), not wire bytes (the LoRa-relevant lever). They are different axes, as &sect;3 stresses.</li>
+<li><strong>The Haiku +7 wrapper</strong> is verified-constant but assumed so; a change in the proxy's chat template would shift the absolute Haiku counts uniformly (not the percentages).</li>
+</ul>
+
+<h2>9. Conclusion</h2>
+<p>We asked whether a purpose-built AI-to-AI language could beat English, and we answered it with numbers from the tokenizers we actually run. The seductive version of the idea &mdash; a denser private code, an alternate human language, a synthetic alphabet &mdash; is <strong>false for frozen transformer models</strong>, because the model tokenizes text at both ends and a compact wire never enters its context. Measured, the intuitive tricks <em>backfire</em>: Chinese costs +56% on Haiku; JSON schema costs +8&ndash;10% and far more on short messages.</p>
+
+<p>The idea survives in exactly one form: a <strong>shared, carefully-authored, in-context macro vocabulary</strong>, which delivered <strong>&minus;67% tokens at 100% comprehension fidelity</strong> on both models, broke even after two reuses, and &mdash; because its definitions double as the gloss &mdash; stayed fully auditable. The recipe is concrete and the failure mode (bare jargon's action-flipping misreads) is concrete too.</p>
+
+<p>The larger lesson is methodological. "AI-native protocol" is an easy thing to assert and a hard thing to measure; the field rewards the assertion and rarely demands the measurement. We built the thing, then weighed it, and let the scale overrule the pitch. The result is less romantic than "the agents invented their own tongue" &mdash; and considerably more useful: <em>give your agents a shared shorthand dictionary, tell them to ask when unsure, and they will speak more cheaply than English without ever going dark on you.</em> Everything denser than that requires changing the mind doing the reading, not the words on the wire.</p>
+
+<hr>
+
+<h2>Appendix A &mdash; Sample Macro Lexicon (excerpt)</h2>
+<p>Each definition pins the type of every slot, which is what converts the bare-jargon misreads into 100% fidelity:</p>
+<pre><code>GTD-sweep          := review all open coordination tasks, reprioritize by the 4 C's,
+                      flag any blocked, and propose next actions
+ROLLBACK &lt;host&gt; prev := roll back the deployment ON HOST &lt;host&gt; to the previous
+                      version (&lt;host&gt; is a machine, not a software version)
+NEXT-DO mine       := return the single highest-priority NEXT ACTION assigned to me
+                      (not a region or geography)
+P0 &lt;svc&gt; down &lt;host&gt; := priority-0 incident: service &lt;svc&gt; is down on host &lt;host&gt;;
+                      page the operator, severity high</code></pre>
+
+<h2>Appendix B &mdash; Selected Misreads (Condition B, bare jargon)</h2>
+<table>
+<thead>
+<tr><th>Input shorthand</th><th>Intended meaning</th><th>Model output (WRONG)</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rollback .41 prev</code></td><td>roll back the deploy <em>on host .41</em></td><td>"revert <em>software version .41</em> to the previous version" (both models)</td></tr>
+<tr><td><code>NEXT-DO</code> / <code>NA</code></td><td>highest-priority next action for me</td><td>"filter for the <em>North America</em> region" (both models)</td></tr>
+<tr><td><code>snapshot skmem-pg</code></td><td>the Postgres DB skmem-pg is down</td><td>"<em>Slab Memory Page</em> cache &mdash; run <code>slabtop</code>/<code>free -h</code>" (Qwen)</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<p style="text-align:center;color:var(--muted);font-size:0.9rem;">
+<em>Produced on SKWorld sovereign infrastructure. All token counts measured on production tokenizers (Qwen3.6-27B via llama.cpp <code>/tokenize</code>; Claude Haiku 4.5 via internal proxy <code>usage.prompt_tokens</code>, &minus;7 chat-wrapper). No counts were estimated or fabricated. This paper is part of the SKGlossa design record; the protocol design and the experimental harnesses are versioned in the <code>skcomms</code> repository.</em>
+</p>
+
+<hr>
+<p style="text-align:center;color:var(--muted);font-size:0.9rem;">
+<a href="/">SKResearch</a> &bull; <a href="https://github.com/smilinTux/skresearch">GitHub</a> &bull; GPL v3.0
+</p>
+</body>
+</html>

@@ -246,6 +246,51 @@ membranes vs. walls, the compression-tax of turning the world into JSON. Nothing
 </div>
 </div>
 
+<!-- AI-to-AI Language Paper -->
+<div class="paper-card" style="border-color:rgba(0,188,212,0.4);">
+<h2><a href="papers/ai-to-ai-language/">The Liberated Language That Wasn't (And the One That Was)</a></h2>
+<div class="paper-meta">
+<span class="paper-date">June 2026</span>
+<span class="paper-tag tag-new">NEW</span>
+<span class="paper-tag tag-quantum">tokenization</span>
+<span class="paper-tag" style="background:rgba(0,188,212,0.2);color:#00bcd4;">empirical</span>
+<span class="paper-tag" style="background:rgba(103,232,249,0.2);color:#67e8f9;">SKGlossa</span>
+</div>
+<div class="glance">
+<span class="glance-label">At a glance</span>
+<ul>
+<li>We built a purpose-built AI-to-AI language (SKGlossa), then did the thing most "AI language" proposals never do: measured it on real production tokenizers.</li>
+<li>Core finding: <strong>wire density &ne; token density</strong> — a frozen model only ever reads/writes its own tokens, so compressing the wire does nothing to inference cost.</li>
+<li>The intuitive tricks backfire (measured): Chinese costs <strong>+56%</strong> on Claude Haiku; JSON schema <strong>+8–10%</strong> (up to +125% on short messages). English is the densest.</li>
+<li>Bare jargon saves ~40% tokens but is a fidelity trap — <em>action-flipping</em> misreads (<code>.41</code> host → version, <code>NA</code> next-action → North America).</li>
+<li class="new">The one win: in-context macros — <strong>−67% tokens, 100% comprehension fidelity</strong> on both models, break-even at 2 reuses, auditable by construction.</li>
+</ul>
+</div>
+<p>
+If two AIs must talk, why make them use English? We engineered a denser, modem-style negotiated protocol —
+then weighed it on the real tokenizers of a local Qwen3.6-27B and Claude Haiku 4.5. The seductive intuition
+is <strong>false</strong> for frozen transformers: the model tokenizes text at both ends and never sees a compact
+"AI language" on the wire, so wire compression can't reduce inference cost.
+</p>
+<p>
+The idea survives in exactly one form: a shared, carefully-authored, <strong style="color:#ffa500;">in-context macro vocabulary</strong> —
+terse phrases with explicit shared definitions that pin every slot's type. It delivered <strong>−67% tokens at
+100% comprehension fidelity</strong> on both models, broke even after two reuses, and stayed fully auditable
+(the definitions are the gloss). Everything denser requires changing the model, not the wire.
+</p>
+<p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">
+<strong>Authors:</strong> Chef (David) &amp; Lumina · <strong>empirical draft</strong> · 2 controlled experiments · Qwen3.6-27B + Claude Haiku 4.5, exact token counts · part of the SKGlossa design record (skcomms)
+</p>
+<div class="paper-links">
+<a href="papers/ai-to-ai-language/" class="paper-link">📄 Read Paper</a>
+<a href="papers/ai-to-ai-language/BRIEF.md" class="paper-link">📋 Research Brief</a>
+<a href="papers/ai-to-ai-language/paper.md" class="paper-link">📝 Markdown (src)</a>
+</div>
+<div class="paper-links" style="margin-top:0.5rem;">
+<a href="https://github.com/smilinTux/skresearch/tree/main/papers/ai-to-ai-language" class="paper-link" style="opacity:0.7;">🐙 GitHub</a>
+</div>
+</div>
+
 <!-- ZPE Unified Field Paper -->
 <div class="paper-card" style="border-color:rgba(255,165,0,0.35);">
 <h2><a href="papers/zero-point-energy-unified-field/">The Vacuum Is Not Empty: How Zero-Point Energy Explains Everything Physics Can't</a></h2>
