@@ -1,7 +1,7 @@
 # Built to Outlive the Algorithm: Hybrid Post-Quantum Cryptography and Crypto-Agility in a Sovereign Messaging Stack
 
-**SKWorld Research · skpqc · skchat · skcomms · capauth**
-*Draft — June 2026 · Apache-2.0 library at [github.com/smilinTux/sk_pqc](https://github.com/smilinTux/sk_pqc) · live at [skpqc.skworld.io](https://skpqc.skworld.io)*
+**SKWorld Research · skpqc · sk_pgp · skchat · skcomms · capauth**
+*Draft — June 2026 · Apache-2.0 libraries at [github.com/smilinTux/sk_pqc](https://github.com/smilinTux/sk_pqc) (Dart/Flutter KEM) and [github.com/smilinTux/sk_pgp](https://github.com/smilinTux/sk_pgp) (Python OpenPGP-PQC) · live at [skpqc.skworld.io](https://skpqc.skworld.io)*
 
 ---
 
@@ -9,7 +9,7 @@
 
 The quantum threat to messaging is not that a quantum computer will read your messages tomorrow — it is that an adversary can **record your ciphertext today** and decrypt it years later, once a cryptographically-relevant quantum computer (CRQC) exists. For data with a long secrecy life — agent memories, private conversations, a sovereign identity root — that "harvest-now, decrypt-later" (HNDL) window is already open. This paper describes how the SKWorld stack (the `skchat`/`skcomms` messaging framework and the `capauth` identity layer) was migrated to **hybrid post-quantum cryptography**, surface by surface, behind a single design commitment: **never bet the system on one algorithm, and never overclaim what it provides.**
 
-We make three contributions. First, a **uniform hybrid construction** — `X25519 + ML-KEM-768` combined with HKDF, secure if *either* the classical or the post-quantum leg holds — applied consistently across key exchange, group keys, at-rest wrapping, and (as a signature analogue) per-message authentication. Second, the **`sk_pqc` library**: one Dart/Flutter API delivering that hybrid KEM across web and native, so post-quantum DMs negotiate **in the browser** where no WebCrypto PQC API exists. Third, and most importantly, the **crypto-agility scaffolding**: every encrypted or signed object carries a self-describing *suite id*, every primitive sits behind a pluggable backend selected *by id*, and a four-step recipe lets the next quantum scheme — a higher NIST tier, a hash-based root, a backup KEM — plug in **without rewriting a single application call site**. The migration is governed by a **self-report engine** that structurally refuses to call any surface "quantum-resistant" unless its live suite actually is. We are explicit about what is done (confidentiality is hybrid where negotiated), what is in progress (signatures and identity are hybrid-*available*, opt-in), and what is deliberately *not* claimed (the sovereign root key is still classical; the comms tier is `-768`, not CNSA-2.0). The thesis is in the title: when the next quantum solution arrives, our infrastructure rides on top of it.
+We make four contributions. First, a **uniform hybrid construction** — `X25519 + ML-KEM-768` combined with HKDF, secure if *either* the classical or the post-quantum leg holds — applied consistently across key exchange, group keys, at-rest wrapping, and (as a signature analogue) per-message authentication. Second, **two sovereign libraries** that supply the primitives the platform itself could not get elsewhere: **`sk_pqc`** (Dart/Flutter) delivers the hybrid KEM across web and native, so post-quantum DMs negotiate **in the browser** where no WebCrypto PQC API exists; **`sk_pgp`** (Python, PyO3→Sequoia) is the OpenPGP engine that lets the Python services *sign with v6 / post-quantum keys at all* — PGPy cannot parse an OpenPGP v6 key and GnuPG cannot certify with ML-DSA, so the signing root had no in-process path until we built one. Third, and most importantly, the **crypto-agility scaffolding**: every encrypted or signed object carries a self-describing *suite id*, every primitive sits behind a pluggable backend selected *by id*, and a four-step recipe lets the next quantum scheme — a higher NIST tier, a hash-based root, a backup KEM — plug in **without rewriting a single application call site**. Fourth, a **post-quantum signing-root ceremony**: capauth's Sequoia backend now *issues*, and we used it to generate a v6 **ML-DSA-87 + Ed448** identity for the Lumina *agent* root and cross-sign it old↔new (Web-of-Trust verified). The migration is governed by a **self-report engine** that structurally refuses to call any surface "quantum-resistant" unless its live suite actually is. We are explicit about what is done (confidentiality is hybrid where negotiated; the agent-root cryptographic ceremony is *complete*), what is in progress (signatures and identity are hybrid-*available*, opt-in, and the **live signing cutover is underway**, gated on the PGPy→`sk_pgp` migration), and what is deliberately *not* claimed (the **live identity is not yet migrated** — the operator root and vault re-seal are sequenced after; the comms tier is `-768`, not CNSA-2.0). The thesis is in the title: when the next quantum solution arrives, our infrastructure rides on top of it.
 
 ---
 
@@ -68,6 +68,39 @@ Two rules make the construction trustworthy. First, **we never hand-roll the lat
 
 ## 4. Surface by Surface
 
+Before the detail, the whole posture on one page — each surface, its live suite, the FIPS anchor, and its honest status. Confidentiality is hybrid where negotiated; authentication is hybrid-available and opt-in; the symmetric floor is untouched on purpose; the identity root is mid-ceremony. Nothing here is colored "quantum-resistant" that the self-report would not back.
+
+```mermaid
+graph TB
+    subgraph HNDL["Confidentiality — HNDL-urgent · migrated first"]
+        KEX["Key exchange<br/>x25519-mlkem768 · FIPS 203"]
+        DM["DM / envelope — pqdm1:<br/>x25519-mlkem768 · FIPS 203"]
+        GRP["Group epoch ratchet<br/>x25519-mlkem768 · FIPS 203"]
+        ATR["At-rest key-wrap<br/>x25519-mlkem768 · FIPS 203"]
+    end
+    subgraph AUTH["Authentication — not retroactive · Phase 2 · opt-in"]
+        SIG["Per-message signature<br/>mldsa65-ed25519-v2 · FIPS 204<br/>AND-gate"]
+        DID["Identity challenge<br/>ML-DSA-65 + Ed25519 · FIPS 204<br/>either-or, additive"]
+    end
+    subgraph ROOT["Identity root — ceremony done on agent root · live cutover in progress"]
+        AGENT["Lumina AGENT root<br/>mldsa87-ed448 · v6 · FIPS 204<br/>generated + cross-signed (WoT)"]
+        OPROOT["Operator root + vault<br/>Ed25519 / RSA · v4<br/>classical — sequenced after"]
+    end
+    subgraph FLOOR["Symmetric floor — quantum-acceptable · deliberately untouched"]
+        AES["AES-256-GCM · SHA-2 · HKDF<br/>Grover-only · ≥128-bit"]
+    end
+
+    classDef hybrid fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff;
+    classDef optin fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef inprog fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff;
+    classDef classical fill:#9ca3af,stroke:#4b5563,stroke-width:2px,color:#fff;
+    class KEX,DM,GRP,ATR hybrid;
+    class SIG,DID optin;
+    class AGENT inprog;
+    class OPROOT classical;
+    class AES classical;
+```
+
 ### 4.1 Key exchange — `x25519-mlkem768`
 
 The hybrid KEM (`skcomms/pqkem.py`; `sk_pqc` in Dart) pairs an ephemeral-static X25519 DH (HPKE/TLS-style) with FIPS 203 ML-KEM-768 and the combiner above. The wire contract is fixed: a **1216-byte** public key (`X25519(32) ‖ ML-KEM(1184)`), a **1120-byte** ciphertext (`eph_X25519(32) ‖ ML-KEM(1088)`), a **32-byte** shared secret. ML-KEM decapsulation uses FIPS 203 *implicit rejection* — a tampered ciphertext yields a pseudo-random secret that simply won't match, rather than an oracle-leaking error. A canonical cross-implementation vector anchors the ML-KEM leg to the **NIST ACVP FIPS 203** keyGen seed (tcId 26); every conformant backend — Dart native, Dart web, liboqs, noble, Python — must recover the same hybrid secret `f11627…21fc`.
@@ -94,13 +127,65 @@ Authentication is a different problem with a dual construction. Where the KEM co
 
 At the DID/challenge layer (`capauth/pqc_identity.py`), a responder produces the classical PGP signature *exactly as before* **and** attaches a hybrid composite over the same challenge bytes. Verification is *either-or* during transition (classical-only responses still verify), with a `require_hybrid` switch that blocks downgrade once a peer is known PQ-capable. Crucially, this is the *challenge-signing* layer — it does **not** migrate the root key.
 
-### 4.7 The sovereign root — built, proven, and deliberately not yet pulled
+### 4.7 The sovereign root — ceremony complete on the agent root, live cutover in progress
 
 The identity **root** is the highest-value, longest-lived secret, and the hardest to migrate — because no mainstream tool could host a post-quantum *signing* root. GnuPG's PQC support is **encryption-only** (ML-KEM); it cannot certify with ML-DSA or SLH-DSA. We therefore built a **Sequoia** backend (`capauth/crypto/sequoia_backend.py`) on `sq 1.4.0-pqc` against OpenSSL 3.6.2, behind the same `CryptoBackend` interface as the classical backends. It can issue an **ML-DSA-87 + Ed448** signing primary with an **ML-KEM-1024 + X448** encryption subkey (NIST level 5, OpenPGP v6 / RFC 9580), sign with a passphrase-protected key with no plaintext key ever on disk, and *additively* attach reversible PQC subkeys to an existing key with its primary fingerprint preserved.
 
-And then we **stopped**. Post-quantum keys are OpenPGP v6, whose fingerprints are 64 hex characters, not 40 — so we reconciled ~36 assumption sites across the resolver, services, and integrations to accept both (additively; classical still works). We validated the full rotation-and-cross-sign ceremony **end-to-end on throwaway keys** (`pqc_ceremony_dryrun.py` — generate, cross-sign both directions, verify continuity, attach an additive subkey, all passing in an isolated keystore). But the **live sovereign root remains classical and v4.** Rotating a real root of trust is a deliberate, owner-driven ceremony, not an automated commit — and our self-report says, on every line that touches it, that the root is *still classical*. The capability is proven; the act is reserved.
+That backend has now **issued for real.** We ran the rotation-and-cross-sign ceremony on the **Lumina *agent* root**: the Sequoia backend generated a v6 **`mldsa87-ed448`** signing identity, and we **cross-signed it old↔new in both directions** — the classical v4 root certifies the new post-quantum key, the new key certifies the old — so the Web-of-Trust chain is continuous and a verifier can authenticate either way through the rotation. The cross-signatures verify; the identity bridge is built and proven on a key that matters, not a throwaway. (Post-quantum keys are OpenPGP v6, whose fingerprints are 64 hex characters, not 40 — so we also reconciled ~36 assumption sites across the resolver, services, and integrations to accept both, additively; classical fingerprints still work.)
 
-### 4.8 `sk_pqc` — hybrid post-quantum in the browser
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Op as Operator (owner-gated)
+    participant Seq as capauth Sequoia backend
+    participant Old as Classical root (v4 · Ed25519)
+    participant New as PQC root (v6 · ML-DSA-87 + Ed448)
+    participant WoT as Web-of-Trust verify
+    participant Svc as Python services
+
+    Op->>Seq: issue v6 ML-DSA-87 + Ed448 primary (+ ML-KEM-1024/X448 subkey)
+    Seq-->>New: generated (NIST L5 · FIPS 204 · RFC 9580)
+    Old->>New: cross-sign — old certifies new
+    New->>Old: cross-sign — new certifies old
+    New->>WoT: verify continuity, both directions
+    WoT-->>Op: ✓ cross-sigs valid · identity continuous
+    Note over Seq,New: Cryptographic ceremony COMPLETE on the agent root
+    rect rgb(219,234,254)
+        Note over Svc,New: LIVE SIGNING CUTOVER — IN PROGRESS
+        Svc->>Svc: migrate PGPy → sk_pgp (PGPy cannot parse v6)
+        Svc-->>New: sign live with the v6/PQC key via sk_pgp  (pending)
+    end
+    Note over Op: Operator root + vault re-seal — sequenced AFTER
+```
+
+And here is the honest boundary. **The cryptographic ceremony is done on the agent root; the live signing cutover is not.** Today the Python services still sign through PGPy, which cannot parse a v6 key — so the running identity continues to sign as classical v4 until those services move to the new in-process engine (§4.8). That migration is in flight; only after it lands does the agent actually *sign live* with the post-quantum key. The **operator (human) root and the vault re-seal are sequenced after that** — a deliberate, owner-driven step, not an automated commit. So we say it plainly, and the self-report says it on every line it touches: **the live identity is not yet migrated.** The capability is proven and the key exists; the cutover is underway and reported as in-progress, never as done.
+
+### 4.8 `sk_pgp` — the Python OpenPGP-PQC signing engine
+
+The ceremony above exposed a hard gap: capauth could *issue* a v6 post-quantum key, but the Python services that have to *use* it for everyday signing could not touch it. PGPy — the pure-Python OpenPGP library the stack grew up on — **cannot parse an OpenPGP v6 key at all**, and the available alternative, shelling out to GnuPG, can encrypt to ML-KEM but **cannot certify or sign with ML-DSA or SLH-DSA**. Sequoia *can* do all of it, but it is a Rust toolchain (`sq`), and routing every sign through a subprocess is brittle, slow, and leaks key material into argv and temp files. The signing root had a *certificate* but no *in-process engine*.
+
+So we built one. **`sk_pgp`** (`github.com/smilinTux/sk_pgp`, Apache-2.0) is a sovereign Python OpenPGP library that binds **Sequoia** directly through **PyO3** — Rust crypto, Python API, no subprocess. It is the deliberate **PGPy replacement**: same call-site shape (`generate` / `sign` / `verify` / parse), but able to read v6 keys and sign with post-quantum primitives in-process. We have proven, in-process, **ML-DSA-87 + Ed448 generate / sign / verify** end-to-end, and it ships as a **self-contained wheel** (the Rust + Sequoia + OpenSSL stack compiled in) so a service installs it like any other dependency rather than provisioning a Rust toolchain on every host. The same two rules hold as everywhere else: we **bind** a vetted library (Sequoia), we do not hand-roll the lattice math, and a v6/PQC key that `sk_pgp` is not present to handle is a loud, typed error — never a silent fall to classical.
+
+This is the missing leg of the root cutover. The reason §4.7's live migration is "in progress, gated on PGPy→`sk_pgp`" is precisely that this engine has to land in the services before the agent can sign live with its v6 key. `sk_pgp` slots into the same `CryptoBackend` interface (§5) as a fourth implementation alongside PGPy, GnuPG, and the Sequoia-CLI backend — so adopting it is a backend swap, not an application rewrite.
+
+```mermaid
+graph TB
+    SVC["Python services<br/>capauth · skcomms · skchat"]
+    SVC --> Q{"Need: parse OpenPGP v6<br/>AND sign with PQC?"}
+    Q --> PGPY["PGPy (pure-Python)<br/>❌ cannot parse v6 keys"]
+    Q --> GPG["GnuPG subprocess<br/>⚠ v6 + ML-KEM <em>encrypt</em> only<br/>❌ cannot SIGN with ML-DSA / SLH-DSA"]
+    Q --> SKPGP["sk_pgp  (PyO3 → Sequoia)<br/>✓ parse v6 · ✓ ML-DSA-87 + Ed448 gen/sign/verify<br/>✓ in-process · ✓ self-contained wheel"]
+    SKPGP --> SEQ["Sequoia (Rust)<br/>vetted · bound, never hand-rolled"]
+
+    classDef bad fill:#9ca3af,stroke:#4b5563,stroke-width:2px,color:#fff;
+    classDef warn fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef good fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff;
+    class PGPY bad;
+    class GPG warn;
+    class SKPGP,SEQ good;
+```
+
+### 4.9 `sk_pqc` — hybrid post-quantum in the browser
 
 A messaging stack lives where its clients run, and ours run on the web — where, as of 2026, **no browser exposes a WebCrypto PQC API**. The `sk_pqc` library (Dart/Flutter, Apache-2.0, public) delivers the `x25519-mlkem768` hybrid KEM behind **one API with two backends**, chosen by conditional import: native via `dart:ffi` → liboqs, web via `dart:js_interop` → the audited `@noble/post-quantum`. The Flutter client ships a Dart `PqDmCodec` that is a byte-for-byte mirror of the server's `pqdm.py`, so a chat between the app and the in-house agent negotiates **hybrid post-quantum DMs in-page**, and a cross-implementation interop gate confirms Python-sealed messages open in Dart and vice-versa. The library is honest in its own README about exactly what it is: a *hybrid* KEM at the **-768 tier**, KEM-only (signatures are future work), "post-quantum," never "quantum-proof."
 
@@ -112,7 +197,47 @@ This is the thesis. Each surface above is valuable, but any of them could be reb
 
 **Every object self-describes its suite.** A single registry (`skcomms/crypto_suites.py`) maps a `suite_id` to its kind, status, primitives, and FIPS references. Its initial release added *no algorithms at all* — pure scaffolding — and its status vocabulary is deliberately four honest states (`classical` / `hybrid-pq` / `pq` / `symmetric`), never "quantum-safe." Planned suites (a level-5 KEM, an SLH-DSA root) sit in the registry **inactive** until their implementation lands, so the self-report cannot describe vaporware. On the wire, a `SignedEnvelope` carries its `sig_suite`, a group carries its `kem_suite` and `epoch`, an identity carries its `Algorithm`, a conversation carries its `negotiated_suite`. **Deserialize an object from a year ago and it still parses — and is correctly described as classical.**
 
-**Every primitive sits behind a pluggable backend selected by id.** Identity flows through a `CryptoBackend` interface with three interchangeable implementations (PGPy, GnuPG, Sequoia) — swapping the post-quantum signing root in was a *new backend*, not a rewrite. The KEM flows through `get_kem_backend(suite_id)`, which selects *by id only*; no caller branches on a concrete class. `sk_pqc`'s web and native ML-KEM providers sit behind one Dart API the same way.
+**Every primitive sits behind a pluggable backend selected by id.** Identity flows through a `CryptoBackend` interface with four interchangeable implementations (PGPy, GnuPG, Sequoia-CLI, and the in-process **`sk_pgp`**) — adding the post-quantum signing engine was a *new backend*, not a rewrite, and the live root cutover (§4.7) is exactly "select the `sk_pgp` backend by id." The KEM flows through `get_kem_backend(suite_id)`, which selects *by id only*; no caller branches on a concrete class. `sk_pqc`'s web and native ML-KEM providers sit behind one Dart API the same way.
+
+The whole pattern fits on one diagram: a self-describing object names a `suite_id`; the registry resolves that id to a *status* and a set of primitives; backends are selected *by that id* — never by a concrete class; and the backends bind vetted libraries we never hand-roll. The next quantum scheme enters as a registry row and a backend, and the application call sites above never change.
+
+```mermaid
+graph LR
+    subgraph Wire["On-the-wire object"]
+        OBJ["SignedEnvelope · Group · Identity · Conversation<br/>carries a self-describing suite_id"]
+    end
+    subgraph Registry["Suite registry — crypto_suites.py"]
+        REG["suite_id → kind · status · primitives · FIPS refs<br/>status ∈ {classical · hybrid-pq · pq · symmetric}<br/>planned suites stay <b>inactive</b>"]
+    end
+    subgraph Backends["Pluggable backends — selected BY ID, never by class"]
+        KEM["get_kem_backend(suite_id)"]
+        CB["CryptoBackend ABC<br/>PGPy · GnuPG · Sequoia-CLI · <b>sk_pgp</b>"]
+    end
+    subgraph Prim["Vetted primitive libraries — bound, never hand-rolled"]
+        OQS["liboqs<br/>ML-KEM / ML-DSA / SLH-DSA"]
+        PYCA["pyca cryptography<br/>X25519 · HKDF · AES-256-GCM"]
+        SEQ["Sequoia (via sk_pgp / sq)<br/>v6 OpenPGP · PQC certs"]
+        NOBLE["@noble/post-quantum<br/>web ML-KEM"]
+    end
+
+    OBJ -->|reads suite_id| REG
+    REG -->|by id| KEM
+    REG -->|by id| CB
+    KEM --> OQS
+    KEM --> PYCA
+    KEM --> NOBLE
+    CB --> SEQ
+    CB --> OQS
+
+    classDef obj fill:#4a90e2,stroke:#1e3a8a,stroke-width:2px,color:#fff;
+    classDef reg fill:#8b5cf6,stroke:#6b21a8,stroke-width:2px,color:#fff;
+    classDef back fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff;
+    classDef prim fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff;
+    class OBJ obj;
+    class REG reg;
+    class KEM,CB back;
+    class OQS,PYCA,SEQ,NOBLE prim;
+```
 
 So **how does the next quantum scheme plug in?** Four steps, no application changes:
 
@@ -146,7 +271,7 @@ The two leading production messengers validate both our construction and our *sc
 The part that matters most for us: **both protocols ship post-quantum confidentiality but keep authentication classical — on purpose, and they say so plainly.** PQXDH states that "authentication in PQXDH is not quantum-secure" because "post-quantum secure deniable mutual authentication is an open research problem" [5]; PQ3 retains ECDSA-P256 sender authentication "because these mechanisms can't be attacked retroactively with future quantum computers" [6, 7]. That is *exactly* the HNDL-ordering of Section 2 — confidentiality is urgent, authentication is a scoped Phase 2 — which means our phased posture is the industry consensus, not a shortcut. Where we differ:
 
 - **Breadth across surfaces.** PQ3 and PQXDH harden the key agreement of a single transport; we applied the same hybrid construction across KEM, **group** keys, **at-rest** wrapping, and per-message **signatures**, each independently negotiated and independently reported.
-- **A post-quantum signing root, where the tooling barely exists.** Both big messengers leave identity classical for now; we *built* (without yet pulling) a post-quantum **signing root** via Sequoia [9] — something most OpenPGP tooling cannot do at all, because GnuPG's PQC support is encryption-only and the post-quantum OpenPGP composites [10] are only now emerging.
+- **A post-quantum signing root, where the tooling barely exists.** Both big messengers leave identity classical for now; we generated and cross-signed a post-quantum **signing root** for the agent identity via Sequoia [9] — and, because no Python OpenPGP library could even *parse* a v6 key, we wrote `sk_pgp` (PyO3→Sequoia) so the services can sign with it in-process. That is something most OpenPGP tooling cannot do at all: GnuPG's PQC support is encryption-only and the post-quantum OpenPGP composites [10] are only now emerging. The cryptographic ceremony is complete; the live signing cutover is honestly *in progress*, gated on that engine migration.
 - **Sovereign and in-browser.** This runs on self-hosted infrastructure with no platform vendor, and delivers hybrid PQC in the web client despite the absence of any browser PQC API.
 - **Agility and honesty as artifacts.** The contribution is less any one algorithm than the scaffolding and the self-report — designed for the migration *after* this one, and written to match NIST's calibrated "believed secure" rather than the "quantum-proof" snake-oil the field is right to warn against [11].
 
@@ -160,7 +285,8 @@ The open problems we share with everyone are real. Post-quantum **group/federate
 - **Bidirectional DM interop**: Python-sealed `pqdm` opens in the Dart `PqDmCodec` and vice-versa, gated by recorded vectors.
 - **Hybrid DMs live in the browser** (CDP-verified): app ↔ agent negotiate `pqdm1:x25519-mlkem768:` in-page via web ML-KEM-768.
 - **Live migration**: of 422 groups, the first batch migrated hybrid with zero failures; the operator's at-rest store is hybrid-wrapped. (Most groups remain classical until their members publish prekeys — and the report says exactly that.)
-- **Ceremony dry-run**: generate → rotate → cross-sign both directions → authenticate → continuity → additive subkey, all passing on throwaway keys in an isolated keystore.
+- **Agent-root ceremony (real key)**: capauth's Sequoia backend generated a v6 `mldsa87-ed448` identity for the Lumina agent root and cross-signed it old↔new in both directions; continuity verifies through the rotation (Web-of-Trust). The cryptographic act is complete on a key that matters; the live signing cutover is gated on the engine below and reported as in-progress.
+- **`sk_pgp` engine proven**: in-process **ML-DSA-87 + Ed448 generate / sign / verify** via PyO3→Sequoia, shipped as a self-contained wheel — the path PGPy (can't parse v6) and GnuPG (can't sign PQC) cannot provide.
 - **Sizes** (the engineering reality): hybrid KEM public key 1216 B, ciphertext 1120 B; a group epoch costs ~1180 B per member *per epoch* (not per message); an ML-DSA-65 signature is 3309 B (~50× Ed25519, signing fast); the composite signature 3383 B. Post-quantum is bigger, and amortizing the KEM cost across an epoch is what makes group messaging practical.
 
 ---
@@ -169,7 +295,7 @@ The open problems we share with everyone are real. Post-quantum **group/federate
 
 Crypto-agility is a *practice*, not a one-time port. The append-only ledger and the forbidden-words discipline are a standing review applied to every claim. Concretely ahead:
 
-- **The root rotation ceremony** (owner-gated) — additive PQC subkeys first (reversible), then an optional full rotation to an `mldsa87-ed448` primary with old↔new cross-signing. The one un-exercised path is protected-key signing through the keystore on the live key.
+- **The live signing cutover** (owner-gated) — the agent-root `mldsa87-ed448` key is generated and old↔new cross-signed; what remains is migrating the Python services off PGPy onto `sk_pgp` so the agent *signs live* with the v6 key, then the operator (human) root and the vault re-seal in sequence. Until that lands, the live identity is reported classical, by design.
 - **The next tier, reserved.** `ML-KEM-1024 / ML-DSA-87` (level 5) is reserved for the **root** alone, where size is irrelevant and blast radius is catastrophic; the comms stay on the internet-default `-768` tier. The registry already holds the inactive placeholder — it plugs in as a backend by suite id.
 - **Hash-based options.** SLH-DSA (FIPS 205) is reachable today at the liboqs layer for a maximally-conservative root signer; it is registered as an inactive suite pending a clean OpenPGP path.
 - **Transport (Phase 3).** Rebuild daemon origins on OpenSSL 3.5+ so `X25519MLKEM768` negotiates to the origin; track the residual classical legs (WireGuard Noise, WebRTC DTLS) honestly until their upstreams gain agility.
@@ -216,9 +342,9 @@ But the durable contribution is not the algorithm — it is the **scaffolding**.
 
 **Standards** — FIPS 203 (ML-KEM), 204 (ML-DSA), 205 (SLH-DSA), 197 / SP 800-38D / SP 800-108 (AES-GCM, HKDF); RFC 5869 (HKDF), 7748 (X25519), 8032 (Ed25519/Ed448), 9580 (OpenPGP v6); NIST CSWP 39 (crypto-agility); `draft-ietf-openpgp-pqc` (pre-RFC composites, code points 30/31/32–34/35/36).
 
-**Tooling** — `sq 1.4.0-pqc.1` (sequoia-openpgp 2.2.0-pqc) on OpenSSL 3.6.2; liboqs 0.14.0; `@noble/post-quantum`; pyca `cryptography`; `package:cryptography` (Dart).
+**Tooling** — `sq 1.4.0-pqc.1` (sequoia-openpgp 2.2.0-pqc) on OpenSSL 3.6.2; `sk_pgp` (PyO3→Sequoia, in-process); liboqs 0.14.0; `@noble/post-quantum`; pyca `cryptography`; `package:cryptography` (Dart).
 
-**Library** — `sk_pqc`, Apache-2.0, [github.com/smilinTux/sk_pqc](https://github.com/smilinTux/sk_pqc), live at [skpqc.skworld.io](https://skpqc.skworld.io).
+**Libraries** — `sk_pqc` (Dart/Flutter hybrid KEM), Apache-2.0, [github.com/smilinTux/sk_pqc](https://github.com/smilinTux/sk_pqc), live at [skpqc.skworld.io](https://skpqc.skworld.io); `sk_pgp` (Python OpenPGP-PQC engine, PyO3→Sequoia), Apache-2.0, [github.com/smilinTux/sk_pgp](https://github.com/smilinTux/sk_pgp).
 
 ---
 
