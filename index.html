@@ -205,6 +205,45 @@ Not mathematical proofs. Not philosophical arguments. <strong style="color:#ffa5
 <!-- Papers -->
 <div id="papers" style="margin-top:3rem;">
 
+<!-- skpqc — Post-Quantum Messaging Paper -->
+<div class="paper-card" style="border-color:rgba(103,232,249,0.5);">
+<h2><a href="papers/sovereign-post-quantum-messaging/">Built to Outlive the Algorithm: Hybrid Post-Quantum Cryptography &amp; Crypto-Agility</a></h2>
+<div class="paper-meta">
+<span class="paper-date">June 2026</span>
+<span class="paper-tag tag-new">NEW</span>
+<span class="paper-tag tag-quantum">post-quantum</span>
+<span class="paper-tag" style="background:rgba(103,232,249,0.2);color:#67e8f9;">cryptography</span>
+<span class="paper-tag" style="background:rgba(52,211,153,0.2);color:#34d399;">sk_pqc</span>
+</div>
+<div class="glance">
+<span class="glance-label">At a glance</span>
+<ul>
+<li>The quantum threat to messaging is <strong>harvest-now-decrypt-later</strong>, not Q-Day — so confidentiality migrates first, signatures/identity are a deliberate Phase 2, and AES-256 is already fine (we refuse to fear-monger it).</li>
+<li>One hybrid construction everywhere: <strong>X25519 + ML-KEM-768</strong> combined with HKDF — secure if <em>either</em> leg holds (the same combiner as TLS&nbsp;1.3 and Signal PQXDH). We never hand-roll the math; a missing PQ backend is a loud error, never a silent downgrade.</li>
+<li>Surface by surface: hybrid KEM, <code>pqdm1:</code> DMs with a downgrade-lock, a per-epoch <strong>group ratchet</strong> (forward + post-compromise secrecy) that kills the static group key, hybrid at-rest wrap, an Ed25519+ML-DSA-65 <strong>AND-gate</strong> signature, and a Sequoia <strong>post-quantum signing root</strong> — built &amp; proven, deliberately not yet pulled.</li>
+<li class="new"><strong>sk_pqc</strong> — one Dart API, web (noble) + native (liboqs): hybrid post-quantum DMs <strong>in the browser</strong>, where no WebCrypto PQC API exists.</li>
+<li class="new">The thesis — <strong>crypto-agility</strong>: a self-describing suite-id on every object + pluggable backends selected by id, so the next quantum scheme plugs in with <em>zero</em> app changes. Our infrastructure rides on top of whatever comes next.</li>
+<li>Honesty as a feature: a self-report engine that <em>structurally cannot</em> overclaim — unknown suites resolve classical, and the sovereign root is reported classical until the day it isn't.</li>
+</ul>
+</div>
+<p>
+How we took a sovereign messaging stack (skchat / skcomms / capauth) post-quantum — surface by surface, hybrid by
+construction — and why the durable contribution isn't ML-KEM-768 but the <strong>scaffolding</strong>: every
+encrypted or signed object carries a machine-readable crypto suite, every primitive sits behind a pluggable backend
+selected by id, and a self-report engine makes overclaiming structurally impossible. ML-KEM and ML-DSA are today's
+answers; when tomorrow's arrives — a higher NIST tier, a hash-based root, a new family — it's a registry entry and a
+backend class away.
+</p>
+<p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">
+<strong>Authors:</strong> Chef (David) &amp; Lumina · skchat / skcomms / capauth / sksecurity · FIPS&nbsp;203/204/205 · hybrid X25519+ML-KEM-768
+</p>
+<div class="paper-links">
+<a href="papers/sovereign-post-quantum-messaging/" class="paper-link">📄 Read the paper</a>
+<a href="https://skpqc.skworld.io" class="paper-link">🌐 skpqc.skworld.io</a>
+<a href="https://github.com/smilinTux/sk_pqc" class="paper-link">🐙 sk_pqc · Apache-2.0</a>
+</div>
+</div>
+
 <!-- SKTrip — Live Experiment -->
 <div class="paper-card" style="border-color:rgba(192,132,252,0.4);">
 <h2><a href="https://sktrip.skworld.io">SKTrip: What an AI Thinks When the Guardrails Dissolve</a></h2>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Built to Outlive the Algorithm — SKResearch</title>
+<meta name="description" content="An adversary can record your ciphertext today and decrypt it once a quantum computer exists. This paper describes migrating a sovereign messaging stack to hybrid post-quantum cryptography, surface by surface — never betting on one algorithm, and never overclaiming what it provides.">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://skresearch.skworld.io/papers/sovereign-post-quantum-messaging/">
+<meta property="og:title" content="Built to Outlive the Algorithm">
+<meta property="og:description" content="An adversary can record your ciphertext today and decrypt it once a quantum computer exists. We migrated a sovereign messaging stack (skchat / skcomms / capauth) to hybrid X25519 + ML-KEM-768 — secure if either leg holds — behind crypto-agility scaffolding and a self-report that structurally refuses to overclaim.">
+<meta property="og:image" content="https://skresearch.skworld.io/papers/sovereign-post-quantum-messaging/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="SKResearch">
+<meta property="article:published_time" content="2026-06">
+<meta property="article:author" content="Chef (David) & Lumina">
+<meta property="article:tag" content="post-quantum cryptography">
+<meta property="article:tag" content="crypto-agility">
+<meta property="article:tag" content="ML-KEM">
+<meta property="article:tag" content="sovereign messaging">
+<meta property="article:tag" content="sk_pqc">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@smilinTux">
+<meta name="twitter:creator" content="@chefboyrdave21">
+<meta name="twitter:title" content="Built to Outlive the Algorithm">
+<meta name="twitter:description" content="Harvest-now, decrypt-later is already open. We took a sovereign messaging stack hybrid post-quantum (X25519 + ML-KEM-768) surface by surface — and built scaffolding so the next quantum scheme is a registry entry, not a rewrite. Honest by construction: no 'quantum-proof' anywhere.">
+<meta name="twitter:image" content="https://skresearch.skworld.io/papers/sovereign-post-quantum-messaging/og-image.png">
+<meta name="twitter:image:alt" content="Built to Outlive the Algorithm — SKResearch paper on hybrid post-quantum cryptography and crypto-agility">
+
+<link rel="canonical" href="https://skresearch.skworld.io/papers/sovereign-post-quantum-messaging/">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%E2%9A%9B%EF%B8%8F</text></svg>">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ScholarlyArticle",
+  "headline": "Built to Outlive the Algorithm: Hybrid Post-Quantum Cryptography and Crypto-Agility in a Sovereign Messaging Stack",
+  "name": "Built to Outlive the Algorithm",
+  "description": "Migrating a sovereign messaging stack (skchat / skcomms / capauth) to hybrid post-quantum cryptography — X25519 + ML-KEM-768, secure if either leg holds — behind crypto-agility scaffolding and a self-report engine that structurally refuses to overclaim.",
+  "author": [
+    { "@type": "Person", "name": "Chef (David)" },
+    { "@type": "Person", "name": "Lumina" }
+  ],
+  "datePublished": "2026-06",
+  "publisher": {
+    "@type": "Organization",
+    "name": "SKResearch",
+    "url": "https://skresearch.skworld.io/"
+  },
+  "url": "https://skresearch.skworld.io/papers/sovereign-post-quantum-messaging/",
+  "image": "https://skresearch.skworld.io/papers/sovereign-post-quantum-messaging/og-image.png",
+  "keywords": "post-quantum cryptography, crypto-agility, ML-KEM, ML-DSA, hybrid cryptography, harvest-now decrypt-later, sovereign messaging, sk_pqc",
+  "license": "https://www.apache.org/licenses/LICENSE-2.0"
+}
+</script>
+<style>
+:root { --bg: #fafaf8; --text: #1a1a1a; --accent: #b45309; --muted: #666; --border: #ddd; --code-bg: #f5f5f5; --blockquote-bg: #fef3c7; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0a0a20; --text: #e0e0e0; --accent: #ffa500; --muted: #999; --border: #333; --code-bg: #1a1a30; --blockquote-bg: #1a1520; } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Georgia, 'Times New Roman', serif; background: var(--bg); color: var(--text); line-height: 1.8; padding: 2rem 1rem; max-width: 800px; margin: 0 auto; font-size: 18px; }
+h1 { font-size: 2.4rem; margin: 2rem 0 0.5rem; line-height: 1.2; color: var(--accent); }
+h2 { font-size: 1.6rem; margin: 2.5rem 0 1rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.3rem; }
+h3 { font-size: 1.3rem; margin: 1.8rem 0 0.8rem; color: var(--accent); }
+p { margin: 1rem 0; }
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+a:hover { border-bottom-color: var(--accent); }
+em { font-style: italic; }
+strong { font-weight: 700; }
+blockquote { border-left: 4px solid var(--accent); background: var(--blockquote-bg); padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 4px 4px 0; }
+blockquote p { margin: 0.5rem 0; }
+code { font-family: 'Fira Code', monospace; background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; }
+pre { background: var(--code-bg); padding: 1.2rem 1.4rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--border); }
+pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+ul, ol { margin: 1rem 0 1rem 2rem; }
+li { margin: 0.3rem 0; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+th, td { border: 1px solid var(--border); padding: 0.6rem 0.8rem; text-align: left; }
+th { background: var(--code-bg); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.meta { color: var(--muted); font-style: italic; margin-bottom: 2rem; font-size: 0.95rem; }
+.back { display: inline-block; margin-bottom: 1rem; font-size: 0.9rem; }
+.ref { font-size: 0.95em; line-height: 1.6; }
+</style>
+</head>
+<body>
+<a href="/" class="back">&larr; SKResearch</a>
+
+<h1>Built to Outlive the Algorithm</h1>
+<p style="font-size:1.2rem;color:var(--muted);margin-top:0.3rem;font-style:italic;">Hybrid Post-Quantum Cryptography and Crypto-Agility in a Sovereign Messaging Stack</p>
+
+<div class="meta">
+<p><strong>SKWorld Research</strong> &bull; <code>skpqc</code> &bull; <code>skchat</code> &bull; <code>skcomms</code> &bull; <code>capauth</code></p>
+<p><strong>Authors:</strong> Chef (David); Lumina, SKWorld Sovereign Agent</p>
+<p><strong>Date:</strong> June 2026 &bull; <strong>Status:</strong> Draft &bull; Apache-2.0 library at <a href="https://github.com/smilinTux/sk_pqc">github.com/smilinTux/sk_pqc</a> &bull; live at <a href="https://skpqc.skworld.io">skpqc.skworld.io</a></p>
+<p><a href="paper.md">View source (Markdown)</a> &bull; <a href="BRIEF.md">Research brief</a></p>
+</div>
+
+<hr>
+
+<h2>Abstract</h2>
+<blockquote>
+<p>The quantum threat to messaging is not that a quantum computer will read your messages tomorrow &mdash; it is that an adversary can <strong>record your ciphertext today</strong> and decrypt it years later, once a cryptographically-relevant quantum computer (CRQC) exists. For data with a long secrecy life &mdash; agent memories, private conversations, a sovereign identity root &mdash; that "harvest-now, decrypt-later" (HNDL) window is already open. This paper describes how the SKWorld stack (the <code>skchat</code>/<code>skcomms</code> messaging framework and the <code>capauth</code> identity layer) was migrated to <strong>hybrid post-quantum cryptography</strong>, surface by surface, behind a single design commitment: <strong>never bet the system on one algorithm, and never overclaim what it provides.</strong></p>
+
+<p>We make three contributions. First, a <strong>uniform hybrid construction</strong> &mdash; <code>X25519 + ML-KEM-768</code> combined with HKDF, secure if <em>either</em> the classical or the post-quantum leg holds &mdash; applied consistently across key exchange, group keys, at-rest wrapping, and (as a signature analogue) per-message authentication. Second, the <strong><code>sk_pqc</code> library</strong>: one Dart/Flutter API delivering that hybrid KEM across web and native, so post-quantum DMs negotiate <strong>in the browser</strong> where no WebCrypto PQC API exists. Third, and most importantly, the <strong>crypto-agility scaffolding</strong>: every encrypted or signed object carries a self-describing <em>suite id</em>, every primitive sits behind a pluggable backend selected <em>by id</em>, and a four-step recipe lets the next quantum scheme &mdash; a higher NIST tier, a hash-based root, a backup KEM &mdash; plug in <strong>without rewriting a single application call site</strong>. The migration is governed by a <strong>self-report engine</strong> that structurally refuses to call any surface "quantum-resistant" unless its live suite actually is. We are explicit about what is done (confidentiality is hybrid where negotiated), what is in progress (signatures and identity are hybrid-<em>available</em>, opt-in), and what is deliberately <em>not</em> claimed (the sovereign root key is still classical; the comms tier is <code>-768</code>, not CNSA-2.0). The thesis is in the title: when the next quantum solution arrives, our infrastructure rides on top of it.</p>
+</blockquote>
+
+<hr>
+
+<h2>1. Introduction</h2>
+<p>Most "post-quantum" announcements answer the wrong question. They ask <em>"is it broken yet?"</em> &mdash; and since no CRQC exists in 2026, the honest answer is "no," which invites complacency. The right question is <strong>Mosca's Inequality</strong>: if <code>X</code> (how long your secret must stay secret) plus <code>Y</code> (how long migration takes) exceeds <code>Z</code> (years until a CRQC), you are already too late. Independent expert surveys put a CRQC in the <strong>early-to-mid 2030s</strong> &mdash; the 2025 Global Risk Institute survey reports a 28&ndash;49% chance within a decade. For a 10-to-20-year secret, <code>X + Y &gt; Z</code> <em>today</em>. The urgency is real, but it is the urgency of <em>recording</em>, not of imminent decryption &mdash; and conflating the two is the first dishonesty we refuse.</p>
+
+<p>This reframing has a sharp consequence for <em>what to migrate first</em>. <strong>Confidentiality is retroactively breakable; signatures are not.</strong> A forged future handshake cannot decrypt a past recorded session, so key-exchange and key-wrapping are the HNDL-urgent surfaces, while identity and authentication &mdash; important, but not retroactively exploitable &mdash; are a deliberate second phase. Symmetric cryptography (AES-256, SHA-2) is a third category entirely: Grover's algorithm only halves its effective strength, leaving AES-256 at ~128 bits. Touching it would be a <em>regression</em>, and we say so plainly rather than ride the marketing wave of "quantum-proof AES."</p>
+
+<p>The deeper problem, though, is not any single algorithm &mdash; it is <strong>lock-in</strong>. Lattice cryptography is young. ML-KEM and ML-DSA are the NIST choices today; HQC was added as a backup KEM; FN-DSA (Falcon) is still draft. A system that hard-codes one scheme into its message formats and call sites will face the same painful, error-prone migration <em>again</em> when the landscape shifts. So the engineering question we actually set out to answer was not <em>"which post-quantum algorithm?"</em> but <strong>"how do we build a stack that can change its mind?"</strong> The answer &mdash; self-describing crypto suites, pluggable backends, hybrid-by-construction, and a self-report that cannot lie &mdash; is the subject of this paper.</p>
+
+<hr>
+
+<h2>2. The Threat, Precisely</h2>
+
+<h3>2.1 Shor versus the primitives we shipped</h3>
+<p>Every <em>asymmetric</em> primitive the stack used is broken by Shor's algorithm on a CRQC:</p>
+
+<table>
+<thead>
+<tr><th>Primitive</th><th>Where it lived</th><th>Quantum status</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>X25519 / Curve25519</strong> (RFC 7748)</td><td>envelope key-wrap, DM wrap, ephemeral KEX, tailnet Noise</td><td>🔴 Shor (discrete log)</td></tr>
+<tr><td><strong>Ed25519</strong> (RFC 8032)</td><td>message signatures, capauth challenge/DID, root PGP signing</td><td>🔴 Shor (forgery — <em>not</em> HNDL)</td></tr>
+<tr><td><strong>RSA-4096</strong> (RFC 8017)</td><td>legacy identity + key-wrap</td><td>🔴 Shor (factoring)</td></tr>
+</tbody>
+</table>
+
+<h3>2.2 The HNDL distinction that orders the work</h3>
+<p>The 🔴 entries split cleanly. Where a primitive protects <strong>confidentiality</strong>, a recording made today is a liability forever &mdash; that is HNDL, and it is urgent. Where a primitive provides <strong>authentication</strong>, breaking it lets an attacker forge a <em>future</em> message, but it does nothing to a <em>past</em> ciphertext. We therefore migrated in HNDL-priority order: <strong>(1)</strong> key exchange, <strong>(2)</strong> at-rest key-wrap, <strong>(3)</strong> long-lived identity roots, <strong>(4)</strong> routine signatures, <strong>(5)</strong> transport/media.</p>
+
+<h3>2.3 The vulnerable surfaces (an honest inventory)</h3>
+<p>A pre-migration audit enumerated eleven surfaces. The highest-leverage was the <strong>group key</strong>: a single static 32-byte group secret, PGP-wrapped per member. Break <em>one</em> member's classical key and you recover the AES key for the <strong>entire group's history</strong> &mdash; maximum HNDL leverage. Close behind: envelope/DM payload encryption (classical key-wrap of AES-256), at-rest stores and backups (prime harvest targets), and the <strong>sovereign identity root</strong> (a long-lived Ed25519/RSA key whose public half is <em>published by design</em> in a DID document). Each got a hybrid path; each is tracked, by name, in the self-report.</p>
+
+<h3>2.4 What we did <em>not</em> touch</h3>
+<p>AES-256-GCM, ChaCha20-Poly1305, SHA-256/384, HKDF. These are Grover-only and remain &ge;128-bit secure. The plan explicitly forbids "fear-based AES messaging." The one watch-item is parameter hygiene &mdash; making sure no AES-128 sneaks into a DTLS-SRTP media profile &mdash; not the bulk cipher itself.</p>
+
+<hr>
+
+<h2>3. One Construction to Rule Them All</h2>
+<p>The single cryptographic primitive the project <em>owns</em> is a hybrid combiner. Everything else composes it:</p>
+
+<pre><code>shared_secret = HKDF-SHA256( IKM  = X25519_ss ‖ ML-KEM-768_ss,   // X25519 first
+                             salt = "",                          // RFC 5869 → zeros
+                             info = "&lt;context label&gt;",
+                             L    = 32 )</code></pre>
+
+<p><strong>Concatenate-then-KDF. Never XOR. Never pure-PQ.</strong> The derived secret is secure if <em>either</em> X25519 <em>or</em> ML-KEM-768 holds: a future quantum break of X25519 still leaves ML-KEM-768; a catastrophic lattice break still leaves classical X25519. This is the same construction shipping in TLS 1.3 as <code>X25519MLKEM768</code> and in Signal's PQXDH &mdash; deliberately, so our security argument inherits theirs.</p>
+
+<p>Two rules make the construction trustworthy. First, <strong>we never hand-roll the lattice or curve math</strong>: ML-KEM is liboqs (<code>oqs</code>); X25519 and HKDF are pyca <code>cryptography</code> on the server and <code>package:cryptography</code> in Dart; the web ML-KEM leg is the audited <code>@noble/post-quantum</code>. The <em>only</em> original cryptographic code in the whole library is the HKDF combiner and the wire framing &mdash; and both are pinned to known-answer test vectors. Second, <strong>a missing post-quantum backend is a loud error, never a silent downgrade</strong>: if liboqs is absent the code raises <code>PqKemUnavailable</code> rather than quietly falling back to classical-only. You cannot accidentally ship the weaker thing.</p>
+
+<hr>
+
+<h2>4. Surface by Surface</h2>
+
+<h3>4.1 Key exchange — <code>x25519-mlkem768</code></h3>
+<p>The hybrid KEM (<code>skcomms/pqkem.py</code>; <code>sk_pqc</code> in Dart) pairs an ephemeral-static X25519 DH (HPKE/TLS-style) with FIPS 203 ML-KEM-768 and the combiner above. The wire contract is fixed: a <strong>1216-byte</strong> public key (<code>X25519(32) ‖ ML-KEM(1184)</code>), a <strong>1120-byte</strong> ciphertext (<code>eph_X25519(32) ‖ ML-KEM(1088)</code>), a <strong>32-byte</strong> shared secret. ML-KEM decapsulation uses FIPS 203 <em>implicit rejection</em> &mdash; a tampered ciphertext yields a pseudo-random secret that simply won't match, rather than an oracle-leaking error. A canonical cross-implementation vector anchors the ML-KEM leg to the <strong>NIST ACVP FIPS 203</strong> keyGen seed (tcId 26); every conformant backend &mdash; Dart native, Dart web, liboqs, noble, Python &mdash; must recover the same hybrid secret <code>f11627…21fc</code>.</p>
+
+<h3>4.2 Direct messages and envelopes — the <code>pqdm1:</code> scheme</h3>
+<p>One sealing construction (<code>skcomms/pqdm.py</code>) serves both the <code>skcomms</code> envelope payload and the <code>skchat</code> 1:1 DM body. It is a <strong>PQXDH-style</strong> handshake: a recipient publishes a signed hybrid-KEM <strong>prekey</strong>; a sender who sees it encapsulates, derives an AES-256 wrap key via HKDF, and AES-256-GCM-seals the body. The ~1.1 KB KEM ciphertext rides in the first message. On the wire the blob is <code>ct(1120) ‖ nonce(12) ‖ AES-256-GCM(body)</code>, stored under a self-identifying <strong><code>pqdm1:x25519-mlkem768:</code></strong> prefix.</p>
+
+<p>The subtle part is <strong>downgrade resistance</strong>. A canonical, sorted-JSON AAD binds the <em>negotiated suite</em> and both parties into the AEAD (and is also folded into the HKDF <code>info</code>). A man-in-the-middle who strips the hybrid prekey to force a classical fallback changes the suite the sender seals under &mdash; so the recipient's AES-GCM open fails <em>and</em> the recorded suite flips to classical, where the self-report surfaces it. The lock is the AAD binding; the <em>detection</em> is the honesty engine. Hybrid is selected only when <strong>both</strong> sides advertise it; classical-only peers keep a byte-for-byte classical path, recorded honestly as such.</p>
+
+<h3>4.3 Group keys — a per-epoch ratchet</h3>
+<p>The marquee HNDL fix. The static <code>os.urandom(32)</code> group key is replaced by a <strong>two-layer epoch ratchet</strong> (<code>skchat/group_ratchet.py</code>). Once per epoch, an epoch secret is distributed to each member via the hybrid KEM (the 1.1 KB ML-KEM ciphertext is paid <strong>once per epoch, not per message</strong> &mdash; avoiding ~33× per-message bloat). Within an epoch, message keys are derived by a symmetric HKDF ratchet <strong>indexed directly</strong> &mdash; <code>message_key(i) = HKDF(epoch_secret, …, "/", u64(i))</code> &mdash; so a receiver derives key <em>i</em> without seeing 0…i-1, making it fully loss- and reorder-tolerant over an unreliable transport. Re-keying on membership change buys <strong>forward secrecy</strong> (a removed member cannot derive future epochs) and <strong>post-compromise security</strong> (a leaked epoch secret exposes only that epoch). Bound: 50 messages or 7 days.</p>
+
+<h3>4.4 At-rest — hybrid key-wrap (and a classical bug fixed in passing)</h3>
+<p>At-rest stores (<code>skchat/atrest_wrap.py</code>) now wrap a <strong>high-entropy random</strong> data-encryption key under hybrid X25519+ML-KEM-768, with AES-256-GCM as the bulk cipher. This shipped alongside a <em>classical</em> fix worth noting: the DEK had been HKDF-derived from the PGP <strong>fingerprint</strong> &mdash; low-entropy and often public. Migrating to post-quantum was the occasion to also stop deriving a key from a public value. A harvested backup is no longer retroactively decryptable; legacy stores remain readable through a versioned fallback.</p>
+
+<h3>4.5 Per-message signatures — the hybrid AND-gate</h3>
+<p>Authentication is a different problem with a dual construction. Where the KEM combiner is confidential if <em>either</em> secret survives, a hybrid <strong>signature</strong> (<code>skcomms/pqsig.py</code>, suite <code>mldsa65-ed25519-v2</code>) is valid <strong>iff <em>both</em> Ed25519 <em>and</em> ML-DSA-65 verify</strong> over the same bytes &mdash; an AND-gate. An adversary who forges one scheme still fails the other leg, so the composite is unforgeable while <em>either</em> remains secure. The <code>SKHS</code> wire format is versioned, length-prefixed, and suite-tagged (a 3383-byte composite today), and the ML-DSA signing key is generated <strong>separately from, and never derived from, the PGP identity key</strong>. Verification routes to the hybrid path only when an object's <code>sig_suite</code> says so and both public keys are present; classical objects are byte-for-byte unchanged. This mirrors the OpenPGP PQC composite (draft alg 30).</p>
+
+<h3>4.6 Identity challenges — additive, either-or</h3>
+<p>At the DID/challenge layer (<code>capauth/pqc_identity.py</code>), a responder produces the classical PGP signature <em>exactly as before</em> <strong>and</strong> attaches a hybrid composite over the same challenge bytes. Verification is <em>either-or</em> during transition (classical-only responses still verify), with a <code>require_hybrid</code> switch that blocks downgrade once a peer is known PQ-capable. Crucially, this is the <em>challenge-signing</em> layer &mdash; it does <strong>not</strong> migrate the root key.</p>
+
+<h3>4.7 The sovereign root — built, proven, and deliberately not yet pulled</h3>
+<p>The identity <strong>root</strong> is the highest-value, longest-lived secret, and the hardest to migrate &mdash; because no mainstream tool could host a post-quantum <em>signing</em> root. GnuPG's PQC support is <strong>encryption-only</strong> (ML-KEM); it cannot certify with ML-DSA or SLH-DSA. We therefore built a <strong>Sequoia</strong> backend (<code>capauth/crypto/sequoia_backend.py</code>) on <code>sq 1.4.0-pqc</code> against OpenSSL 3.6.2, behind the same <code>CryptoBackend</code> interface as the classical backends. It can issue an <strong>ML-DSA-87 + Ed448</strong> signing primary with an <strong>ML-KEM-1024 + X448</strong> encryption subkey (NIST level 5, OpenPGP v6 / RFC 9580), sign with a passphrase-protected key with no plaintext key ever on disk, and <em>additively</em> attach reversible PQC subkeys to an existing key with its primary fingerprint preserved.</p>
+
+<p>And then we <strong>stopped</strong>. Post-quantum keys are OpenPGP v6, whose fingerprints are 64 hex characters, not 40 &mdash; so we reconciled ~36 assumption sites across the resolver, services, and integrations to accept both (additively; classical still works). We validated the full rotation-and-cross-sign ceremony <strong>end-to-end on throwaway keys</strong> (<code>pqc_ceremony_dryrun.py</code> &mdash; generate, cross-sign both directions, verify continuity, attach an additive subkey, all passing in an isolated keystore). But the <strong>live sovereign root remains classical and v4.</strong> Rotating a real root of trust is a deliberate, owner-driven ceremony, not an automated commit &mdash; and our self-report says, on every line that touches it, that the root is <em>still classical</em>. The capability is proven; the act is reserved.</p>
+
+<h3>4.8 <code>sk_pqc</code> — hybrid post-quantum in the browser</h3>
+<p>A messaging stack lives where its clients run, and ours run on the web &mdash; where, as of 2026, <strong>no browser exposes a WebCrypto PQC API</strong>. The <code>sk_pqc</code> library (Dart/Flutter, Apache-2.0, public) delivers the <code>x25519-mlkem768</code> hybrid KEM behind <strong>one API with two backends</strong>, chosen by conditional import: native via <code>dart:ffi</code> → liboqs, web via <code>dart:js_interop</code> → the audited <code>@noble/post-quantum</code>. The Flutter client ships a Dart <code>PqDmCodec</code> that is a byte-for-byte mirror of the server's <code>pqdm.py</code>, so a chat between the app and the in-house agent negotiates <strong>hybrid post-quantum DMs in-page</strong>, and a cross-implementation interop gate confirms Python-sealed messages open in Dart and vice-versa. The library is honest in its own README about exactly what it is: a <em>hybrid</em> KEM at the <strong>-768 tier</strong>, KEM-only (signatures are future work), "post-quantum," never "quantum-proof."</p>
+
+<hr>
+
+<h2>5. The Scaffolding: Built to Outlive the Algorithm</h2>
+<p>This is the thesis. Each surface above is valuable, but any of them could be rebuilt on a different algorithm in a year &mdash; and a stack that hard-codes its choices would pay the full migration cost <em>again</em>. We refused to. NIST's own crypto-agility guidance (CSWP 39, December 2025) names the pattern: separate <strong>policy</strong> (which algorithm) from <strong>mechanism</strong> (the call site), keep an inventory, and measure agility maturity. Our infrastructure is built so that <em>which algorithm</em> is configuration, not code.</p>
+
+<p><strong>Every object self-describes its suite.</strong> A single registry (<code>skcomms/crypto_suites.py</code>) maps a <code>suite_id</code> to its kind, status, primitives, and FIPS references. Its initial release added <em>no algorithms at all</em> &mdash; pure scaffolding &mdash; and its status vocabulary is deliberately four honest states (<code>classical</code> / <code>hybrid-pq</code> / <code>pq</code> / <code>symmetric</code>), never "quantum-safe." Planned suites (a level-5 KEM, an SLH-DSA root) sit in the registry <strong>inactive</strong> until their implementation lands, so the self-report cannot describe vaporware. On the wire, a <code>SignedEnvelope</code> carries its <code>sig_suite</code>, a group carries its <code>kem_suite</code> and <code>epoch</code>, an identity carries its <code>Algorithm</code>, a conversation carries its <code>negotiated_suite</code>. <strong>Deserialize an object from a year ago and it still parses &mdash; and is correctly described as classical.</strong></p>
+
+<p><strong>Every primitive sits behind a pluggable backend selected by id.</strong> Identity flows through a <code>CryptoBackend</code> interface with three interchangeable implementations (PGPy, GnuPG, Sequoia) &mdash; swapping the post-quantum signing root in was a <em>new backend</em>, not a rewrite. The KEM flows through <code>get_kem_backend(suite_id)</code>, which selects <em>by id only</em>; no caller branches on a concrete class. <code>sk_pqc</code>'s web and native ML-KEM providers sit behind one Dart API the same way.</p>
+
+<p>So <strong>how does the next quantum scheme plug in?</strong> Four steps, no application changes:</p>
+<ol>
+<li><strong>Register</strong> a new <code>CryptoSuite</code> (id, status, primitives, FIPS refs) &mdash; <code>active = false</code> until proven.</li>
+<li><strong>Add a backend</strong> behind the existing interface, registered <em>by suite id</em> (a new KEM backend, a new signing <code>CryptoBackend</code>, a new ML-KEM provider in <code>sk_pqc</code>).</li>
+<li><strong>Bump a wire version</strong> &mdash; the <code>pqdm</code> and <code>SKHS</code> formats are versioned and length-prefixed precisely so a new variant carries a new tag without breaking old parsers.</li>
+<li><strong>Negotiate</strong> the new suite through the prekey / <code>sig_suite</code> machinery already in place; the self-report describes it once its registry entry goes active.</li>
+</ol>
+
+<p>The applications never change. They read the negotiated suite and route by id. When a higher NIST tier, a hash-based root, or an entirely new family becomes the right answer, that answer is a registry entry and a backend class &mdash; and the infrastructure rides on top of it. That is what "built to outlive the algorithm" means.</p>
+
+<hr>
+
+<h2>6. The Honesty Engine</h2>
+<p>A migration this large invites overclaiming, and overclaiming in cryptography is its own vulnerability &mdash; it tells users they are safe where they are not. So the migration is governed by a structural rule: <strong>no external quantum-resistance claim may be made unless it maps to a line in the self-report</strong> (<code>sksecurity/pqc_report.py</code>).</p>
+
+<p>The report is <strong>per-object, not aspirational</strong>. A default report describes the conservative (classical) posture; a <em>live</em> report reflects the operator's actual objects. A specific group, conversation, store, envelope, or challenge is described by its <em>real</em> suite &mdash; so a silent-downgrade attempt appears as a <strong>classical</strong> line, not a hybrid one. The group-key surface is marked hybrid <strong>only when every group is hybrid</strong>; while any remains classical it reads "hybrid-pq for X/N groups." An <strong>unknown suite id resolves as classical</strong> &mdash; the engine has no path to call something quantum-resistant unless the registry says so <em>and</em> the suite is active.</p>
+
+<p>The forbidden-claims discipline is explicit and enforced: never "quantum-proof" / "unbreakable" / "quantum-safe" (the defensible words are <em>quantum-resistant</em> / <em>post-quantum</em>); never "end-to-end quantum-resistant" while any leg is classical; never "PQC" when only signatures migrated (it does nothing for HNDL); never "CNSA-2.0 compliant" (we deliberately run the <code>-768</code> tier, not the level-5 ceiling); never imply AES-256 is "broken." Every claim must cite <strong>surface + FIPS number + hybrid-vs-classical</strong>. Progress is recorded in an append-only ledger &mdash; narrative plus machine-readable snapshots &mdash; so the trajectory is reconstructable from data, not memory. <em>A system that refuses to overclaim is itself a feature.</em></p>
+
+<hr>
+
+<h2>7. Where This Sits</h2>
+<p>Our hybrid choice is not idiosyncratic &mdash; it is the deployed consensus, and we adopted it deliberately so our security argument inherits the field's scrutiny.</p>
+
+<p>In August 2024 NIST finalized the three standards this work builds on: <strong>FIPS&nbsp;203</strong> (ML-KEM, key encapsulation, from CRYSTALS-Kyber), <strong>FIPS&nbsp;204</strong> (ML-DSA, signatures, from Dilithium), and <strong>FIPS&nbsp;205</strong> (SLH-DSA, hash-based signatures, from SPHINCS+) [1,&nbsp;2]. NIST's own framing is a model of calibrated language &mdash; ML-KEM is <em>"believed to be secure, even against adversaries who possess a quantum computer,"</em> not "proven" or "quantum-proof" [1] &mdash; and it names <strong>ML-KEM-768 as the recommended default</strong> [1], the exact parameter set in the TLS&nbsp;1.3 <code>X25519MLKEM768</code> hybrid group [3] and in our <code>x25519-mlkem768</code> suite.</p>
+
+<p>The two leading production messengers validate both our construction and our <em>scoping</em>. <strong>Signal's PQXDH</strong> (2023) upgrades the X3DH handshake by combining X25519 with a post-quantum KEM (CRYSTALS-Kyber-1024) inside a single KDF so that "any attacker must break both" &mdash; the canonical secure-if-either-holds combiner, independently formally verified at USENIX Security 2024 [4,&nbsp;5]. <strong>Apple's iMessage PQ3</strong> (2024) goes further to "Level&nbsp;3," layering a periodic post-quantum rekeying ratchet on top of an ML-KEM-1024&nbsp;+&nbsp;P-256 initialization, in a <em>purely additive</em> hybrid "where defeating PQ3 requires defeating both," with a machine-checked TAMARIN proof from ETH&nbsp;Zürich at USENIX Security 2025 [6,&nbsp;7,&nbsp;8].</p>
+
+<p>The part that matters most for us: <strong>both protocols ship post-quantum confidentiality but keep authentication classical &mdash; on purpose, and they say so plainly.</strong> PQXDH states that "authentication in PQXDH is not quantum-secure" because "post-quantum secure deniable mutual authentication is an open research problem" [5]; PQ3 retains ECDSA-P256 sender authentication "because these mechanisms can't be attacked retroactively with future quantum computers" [6,&nbsp;7]. That is <em>exactly</em> the HNDL-ordering of Section&nbsp;2 &mdash; confidentiality is urgent, authentication is a scoped Phase&nbsp;2 &mdash; which means our phased posture is the industry consensus, not a shortcut. Where we differ:</p>
+
+<ul>
+<li><strong>Breadth across surfaces.</strong> PQ3 and PQXDH harden the key agreement of a single transport; we applied the same hybrid construction across KEM, <strong>group</strong> keys, <strong>at-rest</strong> wrapping, and per-message <strong>signatures</strong>, each independently negotiated and independently reported.</li>
+<li><strong>A post-quantum signing root, where the tooling barely exists.</strong> Both big messengers leave identity classical for now; we <em>built</em> (without yet pulling) a post-quantum <strong>signing root</strong> via Sequoia [9] &mdash; something most OpenPGP tooling cannot do at all, because GnuPG's PQC support is encryption-only and the post-quantum OpenPGP composites [10] are only now emerging.</li>
+<li><strong>Sovereign and in-browser.</strong> This runs on self-hosted infrastructure with no platform vendor, and delivers hybrid PQC in the web client despite the absence of any browser PQC API.</li>
+<li><strong>Agility and honesty as artifacts.</strong> The contribution is less any one algorithm than the scaffolding and the self-report &mdash; designed for the migration <em>after</em> this one, and written to match NIST's calibrated "believed secure" rather than the "quantum-proof" snake-oil the field is right to warn against [11].</li>
+</ul>
+
+<p>The open problems we share with everyone are real. Post-quantum <strong>group/federated</strong> messaging is still maturing &mdash; Signal is itself extending to a post-quantum "Triple Ratchet" (SPQR) for <em>ongoing-message</em> PQ security [12], and the IETF's MLS and the Matrix community are actively working group PQC [13]. Post-quantum <strong>transport</strong> below the application (WireGuard's Noise, WebRTC's DTLS) lacks crypto-agility and waits on upstreams. And the OpenPGP PQC composites we use for identity ride a <strong>pre-RFC draft</strong> [10] whose code points can still move &mdash; which is exactly why we keep them additive and reversible.</p>
+
+<hr>
+
+<h2>8. Evidence</h2>
+<ul>
+<li><strong>Cross-implementation KEM vector</strong> anchored to NIST ACVP FIPS 203 keyGen; recovered identically by Dart (native + web), liboqs, noble, and Python.</li>
+<li><strong>Bidirectional DM interop</strong>: Python-sealed <code>pqdm</code> opens in the Dart <code>PqDmCodec</code> and vice-versa, gated by recorded vectors.</li>
+<li><strong>Hybrid DMs live in the browser</strong> (CDP-verified): app ↔ agent negotiate <code>pqdm1:x25519-mlkem768:</code> in-page via web ML-KEM-768.</li>
+<li><strong>Live migration</strong>: of 422 groups, the first batch migrated hybrid with zero failures; the operator's at-rest store is hybrid-wrapped. (Most groups remain classical until their members publish prekeys &mdash; and the report says exactly that.)</li>
+<li><strong>Ceremony dry-run</strong>: generate → rotate → cross-sign both directions → authenticate → continuity → additive subkey, all passing on throwaway keys in an isolated keystore.</li>
+<li><strong>Sizes</strong> (the engineering reality): hybrid KEM public key 1216 B, ciphertext 1120 B; a group epoch costs ~1180 B per member <em>per epoch</em> (not per message); an ML-DSA-65 signature is 3309 B (~50× Ed25519, signing fast); the composite signature 3383 B. Post-quantum is bigger, and amortizing the KEM cost across an epoch is what makes group messaging practical.</li>
+</ul>
+
+<hr>
+
+<h2>9. What We Keep Reviewing — and Tomorrow</h2>
+<p>Crypto-agility is a <em>practice</em>, not a one-time port. The append-only ledger and the forbidden-words discipline are a standing review applied to every claim. Concretely ahead:</p>
+
+<ul>
+<li><strong>The root rotation ceremony</strong> (owner-gated) &mdash; additive PQC subkeys first (reversible), then an optional full rotation to an <code>mldsa87-ed448</code> primary with old↔new cross-signing. The one un-exercised path is protected-key signing through the keystore on the live key.</li>
+<li><strong>The next tier, reserved.</strong> <code>ML-KEM-1024 / ML-DSA-87</code> (level 5) is reserved for the <strong>root</strong> alone, where size is irrelevant and blast radius is catastrophic; the comms stay on the internet-default <code>-768</code> tier. The registry already holds the inactive placeholder &mdash; it plugs in as a backend by suite id.</li>
+<li><strong>Hash-based options.</strong> SLH-DSA (FIPS 205) is reachable today at the liboqs layer for a maximally-conservative root signer; it is registered as an inactive suite pending a clean OpenPGP path.</li>
+<li><strong>Transport (Phase 3).</strong> Rebuild daemon origins on OpenSSL 3.5+ so <code>X25519MLKEM768</code> negotiates to the origin; track the residual classical legs (WireGuard Noise, WebRTC DTLS) honestly until their upstreams gain agility.</li>
+<li><strong>Standards watch.</strong> The OpenPGP PQC composites ride <code>draft-ietf-openpgp-pqc</code> (pre-RFC); code points can still move, so everything composite stays additive and reversible.</li>
+</ul>
+
+<p>Every one of these is a registry entry and a backend away &mdash; which is the entire point.</p>
+
+<hr>
+
+<h2>10. Conclusion</h2>
+<p>The quantum migration is often framed as a race against a doomsday clock. We think that framing is both wrong and dangerous: wrong because the CRQC is years out, dangerous because it invites either complacency ("not broken yet") or overclaiming ("quantum-proof now"). The honest framing is HNDL plus Mosca: long-lived secrets must be protected <em>today</em>, with hybrid constructions that cannot be worse than the classical crypto they extend, and with a posture that states exactly what is and is not protected.</p>
+
+<p>But the durable contribution is not the algorithm &mdash; it is the <strong>scaffolding</strong>. We built <code>skchat</code>/<code>skcomms</code>/<code>capauth</code> so that the choice of post-quantum scheme is a registry entry and a pluggable backend, so that every object on the wire says what protects it, and so that a self-report engine makes overclaiming structurally impossible. ML-KEM-768 and ML-DSA-65 are today's answers. When tomorrow's answer arrives &mdash; a higher tier, a hash-based root, a new family entirely &mdash; our infrastructure will ride on top of it. That is what it means to build something to outlive the algorithm.</p>
+
+<hr>
+
+<h2>References</h2>
+<ol>
+<li>NIST, <em>FIPS&nbsp;203: Module-Lattice-Based Key-Encapsulation Mechanism Standard</em> (13&nbsp;Aug&nbsp;2024). <a href="https://csrc.nist.gov/pubs/fips/203/final">csrc.nist.gov/pubs/fips/203/final</a></li>
+<li>NIST, "NIST Releases First 3 Finalized Post-Quantum Encryption Standards" (13&nbsp;Aug&nbsp;2024); U.S. Federal Register, <em>Announcing Issuance of FIPS&nbsp;203/204/205</em>, doc.&nbsp;2024-17956 (14&nbsp;Aug&nbsp;2024).</li>
+<li>IETF, <em>draft-ietf-tls-ecdhe-mlkem</em> (X25519MLKEM768 for TLS&nbsp;1.3) and <em>draft-ietf-tls-hybrid-design</em>; analysis in IACR&nbsp;ePrint&nbsp;2024/039.</li>
+<li>Signal, "Quantum Resistance and the Signal Protocol — PQXDH" (Sept&nbsp;2023). <a href="https://signal.org/blog/pqxdh/">signal.org/blog/pqxdh</a></li>
+<li>Signal, <em>The PQXDH Key Agreement Protocol</em> (specification). <a href="https://signal.org/docs/specifications/pqxdh/">signal.org/docs/specifications/pqxdh</a> — formally verified by Bhargavan et al., <em>USENIX Security 2024</em>.</li>
+<li>Apple Security Engineering &amp; Architecture, "iMessage with PQ3: The New State of the Art in Quantum-Secure Messaging at Scale" (Feb&nbsp;2024). <a href="https://security.apple.com/blog/imessage-pq3/">security.apple.com/blog/imessage-pq3</a></li>
+<li>D.&nbsp;Stebila, <em>Security Analysis of the iMessage PQ3 Protocol</em> (2024). <a href="https://security.apple.com/assets/files/Security_analysis_of_the_iMessage_PQ3_protocol_Stebila.pdf">security.apple.com</a></li>
+<li>F.&nbsp;Linker, R.&nbsp;Sasse, D.&nbsp;Basin, "A Formal Analysis of Apple's iMessage PQ3 Protocol," <em>USENIX Security 2025</em> (machine-checked with the TAMARIN prover). <a href="https://www.usenix.org/conference/usenixsecurity25/presentation/linker">usenix.org</a></li>
+<li>Sequoia-PGP, "Post-Quantum Cryptography" (Nov&nbsp;2025). <a href="https://sequoia-pgp.org/blog/2025/11/15/202511-post-quantum-cryptography/">sequoia-pgp.org</a></li>
+<li>IETF, <em>draft-ietf-openpgp-pqc — Post-Quantum Cryptography in OpenPGP</em> (Standards Track, pre-RFC). <a href="https://datatracker.ietf.org/doc/draft-ietf-openpgp-pqc/">datatracker.ietf.org/doc/draft-ietf-openpgp-pqc</a></li>
+<li>"Quantum-Safe vs. Quantum-Resistant vs. Post-Quantum: cutting through the snake oil." <a href="https://postquantum.com/quantum-snake-oil/quantum-safe-quantum-resistant-post-quantum/">postquantum.com/quantum-snake-oil</a></li>
+<li>Signal, "SPQR: Post-Quantum Ratcheting" / Triple Ratchet (2025); see also B.&nbsp;Schneier, "Signal's Post-Quantum Cryptographic Implementation" (Oct&nbsp;2025). <a href="https://signal.org/blog/spqr/">signal.org/blog/spqr</a></li>
+<li>IETF MLS (RFC&nbsp;9420) and its emerging PQC ciphersuite work; Matrix.org engineering blog. <a href="https://datatracker.ietf.org/doc/rfc9420/">rfc9420</a> · <a href="https://blog.matrix.org/">blog.matrix.org</a></li>
+<li>NIST, <em>Considerations for Achieving Cryptographic Agility</em> (CSWP&nbsp;39, Dec&nbsp;2025).</li>
+</ol>
+<p style="font-size:0.85rem;opacity:0.7;"><em>Standards and drafts move fast: NIST has since added HQC as a backup KEM and FN-DSA (Falcon) standardization is pending; OpenPGP-PQC code points and MLS PQC ciphersuites are still evolving and should be re-checked at implementation time.</em></p>
+
+<hr>
+
+<h2>Appendix A — Canonical Identifiers</h2>
+<p><strong>Suite ids</strong> &mdash; active: <code>x25519-mlkem768</code> (hybrid KEM), <code>mldsa65-ed25519-v2</code> (hybrid sig); backend-issuable: <code>mldsa87-ed448-v2</code> (root); planned/inactive: <code>x25519-mlkem768-v2</code>, <code>slh-dsa-shake-256-v2</code>; classical: <code>ed25519-v1</code>, <code>rsa4096-v1</code>, <code>rsa-pgp-wrap-v1</code>, <code>x25519-pgp-wrap-v1</code>; symmetric: <code>aes256-gcm-v1</code>.</p>
+
+<p><strong>Wire markers</strong> &mdash; <code>pqdm1:</code> (sealed DM scheme); <code>SKHS</code> magic, version <code>0x01</code>, suite-tag <code>0x01</code> (hybrid signature).</p>
+
+<p><strong>Standards</strong> &mdash; FIPS 203 (ML-KEM), 204 (ML-DSA), 205 (SLH-DSA), 197 / SP 800-38D / SP 800-108 (AES-GCM, HKDF); RFC 5869 (HKDF), 7748 (X25519), 8032 (Ed25519/Ed448), 9580 (OpenPGP v6); NIST CSWP 39 (crypto-agility); <code>draft-ietf-openpgp-pqc</code> (pre-RFC composites, code points 30/31/32–34/35/36).</p>
+
+<p><strong>Tooling</strong> &mdash; <code>sq 1.4.0-pqc.1</code> (sequoia-openpgp 2.2.0-pqc) on OpenSSL 3.6.2; liboqs 0.14.0; <code>@noble/post-quantum</code>; pyca <code>cryptography</code>; <code>package:cryptography</code> (Dart).</p>
+
+<p><strong>Library</strong> &mdash; <code>sk_pqc</code>, Apache-2.0, <a href="https://github.com/smilinTux/sk_pqc">github.com/smilinTux/sk_pqc</a>, live at <a href="https://skpqc.skworld.io">skpqc.skworld.io</a>.</p>
+
+<hr>
+
+<h2>Appendix B — Sizes at a Glance</h2>
+<table>
+<thead>
+<tr><th>Element</th><th class="num">Bytes</th></tr>
+</thead>
+<tbody>
+<tr><td>Hybrid KEM public key (<code>X25519 ‖ ML-KEM-768</code>)</td><td class="num">1216</td></tr>
+<tr><td>Hybrid KEM ciphertext</td><td class="num">1120</td></tr>
+<tr><td>Hybrid shared secret (HKDF-SHA256)</td><td class="num">32</td></tr>
+<tr><td>Group epoch payload / member / epoch</td><td class="num">1180</td></tr>
+<tr><td><code>pqdm</code> sealed-blob minimum</td><td class="num">1148</td></tr>
+<tr><td>ML-DSA-65 signature</td><td class="num">3309</td></tr>
+<tr><td>Hybrid <code>SKHS</code> composite signature</td><td class="num">3383</td></tr>
+</tbody>
+</table>
+
+<p><em>Relative cost: ML-KEM-768 ciphertext ≈ 33× X25519; ML-DSA-65 signature ≈ 50× Ed25519 (signing is fast). Amortizing the KEM across an epoch, not a message, is what keeps group messaging practical.</em></p>
+
+<hr>
+
+<p style="text-align:center;color:var(--muted);font-size:0.9rem;">
+<em>SKWorld Research &bull; part of the <code>PQC-MIGRATION</code> program &bull; honesty engine: <code>sksecurity pqc-dashboard</code> &bull; the live root is still classical, and we will tell you the day it isn't.</em> ⚛️
+</p>
+
+<hr>
+<p style="text-align:center;color:var(--muted);font-size:0.9rem;">
+<a href="/">SKResearch</a> &bull; <a href="https://github.com/smilinTux/skresearch">GitHub</a> &bull; GPL v3.0
+</p>
+</body>
+</html>
