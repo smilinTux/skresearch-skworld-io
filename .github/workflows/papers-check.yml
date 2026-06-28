@@ -1,0 +1,46 @@
+name: papers-check
+
+# Validates the paper site on every push / PR:
+#   1. link-check  - all internal relative/root-relative links resolve (offline)
+#   2. sync-check  - every paper has index.html; paper.md/index.html pairs are
+#                    present, with section-count drift surfaced as a warning
+# Both checks are pure-stdlib Python so the runner needs no dependencies.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'papers/**'
+      - '*.html'
+      - 'sitemap.xml'
+      - 'scripts/check_*.py'
+      - '.github/workflows/papers-check.yml'
+  pull_request:
+    paths:
+      - 'papers/**'
+      - '*.html'
+      - 'sitemap.xml'
+      - 'scripts/check_*.py'
+      - '.github/workflows/papers-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Link check (offline, internal links)
+        run: python3 scripts/check_links.py
+
+      - name: Sync check (index.html <-> paper.md)
+        run: python3 scripts/check_sync.py
