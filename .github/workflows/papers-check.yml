@@ -14,6 +14,8 @@ on:
       - '*.html'
       - 'sitemap.xml'
       - 'scripts/check_*.py'
+      - 'scripts/highlights.py'
+      - 'scripts/test_highlights.py'
       - '.github/workflows/papers-check.yml'
   pull_request:
     paths:
@@ -21,6 +23,8 @@ on:
       - '*.html'
       - 'sitemap.xml'
       - 'scripts/check_*.py'
+      - 'scripts/highlights.py'
+      - 'scripts/test_highlights.py'
       - '.github/workflows/papers-check.yml'
   workflow_dispatch:
 
@@ -44,3 +48,9 @@ jobs:
 
       - name: Sync check (index.html <-> paper.md)
         run: python3 scripts/check_sync.py
+
+      - name: At-a-Glance digest tests (offline, stdlib runner)
+        run: python3 scripts/test_highlights.py
+
+      - name: At-a-Glance digest sync (index.html up to date)
+        run: python3 scripts/highlights.py --check
