@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "SKResearch Component Map",
+    "subtitle": "How a paper becomes a static page: source repo, sync checks, GitHub Pages",
+    "output": "skresearch.architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "source", "type": "external", "label": "skresearch", "sublabel": "source repo: paper.md + BRIEF.md", "pos": [40, 240], "size": [170, 64] },
+    { "id": "ci", "type": "backend", "label": "papers-check", "sublabel": "link + sync CI gate", "pos": [340, 60], "size": [170, 64] },
+    { "id": "digest", "type": "backend", "label": "highlights.py", "sublabel": "At a Glance generator", "pos": [600, 60], "size": [170, 64] },
+    { "id": "papers", "type": "frontend", "label": "papers/", "sublabel": "per paper index.html", "pos": [320, 420], "size": [170, 64] },
+    { "id": "index", "type": "frontend", "label": "index.html", "sublabel": "paper cards + nav", "pos": [630, 420], "size": [170, 64] },
+    { "id": "pages", "type": "cloud", "label": "GitHub Pages", "sublabel": "skresearch.skworld.io", "pos": [880, 240], "size": [170, 64] },
+    { "id": "readers", "type": "external", "label": "Readers and agents", "sublabel": "humans + llms.txt consumers", "pos": [1220, 240], "size": [180, 64] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "skresearch-skworld-io (this site repo)", "wraps": ["ci", "digest", "papers", "index"] }
+  ],
+  "connections": [
+    { "id": "source-to-papers", "from": "source", "to": "papers", "label": "paper.md + BRIEF.md mirrored in", "variant": "default" },
+    { "id": "papers-to-index", "from": "papers", "to": "index", "label": "paper cards listed", "variant": "default" },
+    { "id": "papers-to-ci", "from": "papers", "to": "ci", "label": "sync + link check", "variant": "dashed" },
+    { "id": "index-to-ci", "from": "index", "to": "ci", "label": "sync + link check", "variant": "dashed" },
+    { "id": "ci-to-digest", "from": "ci", "to": "digest", "label": "digest drift check", "variant": "dashed" },
+    { "id": "digest-to-index", "from": "digest", "to": "index", "label": "writes At a Glance block", "variant": "emphasis" },
+    { "id": "index-to-pages", "from": "index", "to": "pages", "label": "served as static files, papers/ included", "variant": "default" },
+    { "id": "pages-to-readers", "from": "pages", "to": "readers", "label": "HTTPS, plus llms.txt for agents", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Static, source derived", "items": ["Papers originate in the skresearch code repo as markdown and BRIEF.md files, then get mirrored into papers/ here as plain HTML", "No app server: GitHub Pages serves this repo's files directly, with no build step at request time"] },
+    { "dot": "emerald", "title": "CI keeps it honest", "items": ["papers-check runs check_links.py and check_sync.py on every push and pull request, so every paper.md has a matching index.html and no internal link is broken", "highlights.py regenerates the At a Glance digest from the paper cards already in index.html and fails the check if it drifts"] }
+  ]
+}

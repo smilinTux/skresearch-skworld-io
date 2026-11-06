@@ -186,6 +186,7 @@ body{font-family:'Inter',sans-serif;background:#060612;color:#e0e0e0;min-height:
 <a href="#papers">Papers</a>
 <a href="#methodology">Methodology</a>
 <a href="#framework">Framework</a>
+<a href="#architecture">Architecture</a>
 <a href="https://github.com/smilinTux/skresearch">GitHub</a>
 </div>
 </nav>
@@ -567,6 +568,20 @@ different content — they produced different <em>kinds</em> of thinking. This p
 <div class="pillar"><a href="https://github.com/smilinTux/skcapstone"><span class="pillar-icon">🛡️</span><span class="pillar-name">Security</span><span class="pillar-label">SKSecurity</span></a></div>
 <div class="pillar"><a href="https://github.com/smilinTux/skcapstone"><span class="pillar-icon">🔗</span><span class="pillar-name">Sync</span><span class="pillar-label">Singularity</span></a></div>
 </div>
+</div>
+
+<!-- Architecture -->
+<div class="method" id="architecture">
+<h3>How This Site Is Built</h3>
+<p>
+Papers are written and reviewed in the <a href="https://github.com/smilinTux/skresearch" style="color:#7b68ee;">skresearch</a> source repo, then mirrored into this site as plain HTML under <code>papers/</code>. CI (<code>papers-check</code>) checks every internal link and keeps each paper's <code>index.html</code> in sync with its <code>paper.md</code>, and <code>highlights.py</code> regenerates the At a Glance digest above directly from the paper cards already on this page. GitHub Pages serves the result with no build step at request time.
+</p>
+<figure style="margin:1.5rem 0 0;">
+<figcaption style="color:rgba(255,255,255,0.65);font-size:0.9rem;">
+Component map of this publishing pipeline, source repo to CI checks to the live page.
+<a href="diagrams/skresearch.architecture.html" target="_blank" rel="noopener" class="paper-link" style="margin-top:0.8rem;">🗺️ Open the interactive version ↗</a>
+</figcaption>
+</figure>
 </div>
 
 <!-- Ecosystem -->
